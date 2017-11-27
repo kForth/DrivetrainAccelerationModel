@@ -83,8 +83,8 @@ class Model:
         self.vehicle_mass *= 0.4535924  # convert lbm to kg
 
     def calc_max_accel(self, V):  # compute acceleration w/ slip
-        Wm = V / self.wheel_radius * self.gear_ratio  # Wm = motor speed associated with vehicle speed
-        max_torque_at_voltage = self.torque_offset - self.torque_slope * Wm  # available torque at motor @ V, in Newtons
+        motor_to_wheel_speed = V / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
+        max_torque_at_voltage = self.torque_offset - self.torque_slope * motor_to_wheel_speed  # available torque at motor @ V, in Newtons
         max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
         available_force_at_wheel = max_torque_at_wheel / self.wheel_radius * self.num_motors  # available force at wheels
         applied_force_at_wheel = 0  # slip-adjusted vehicle force due to wheel torque
