@@ -1,4 +1,4 @@
-from motors import MOTOR_LOOKUP
+from model.motors import MOTOR_LOOKUP
 
 
 class Model:
