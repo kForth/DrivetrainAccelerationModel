@@ -1,9 +1,13 @@
+from matplotlib import lines
+from matplotlib import patches
+
 from model.motors import MOTOR_LOOKUP
 
 
 class Model:
     SAMPLE_CONFIG = {
-        'motor_type':              'CIM',  # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
+        'motor_type':              'CIM',
+        # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
         'num_motors':              4,  # number of motors
 
         'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
@@ -24,8 +28,12 @@ class Model:
 
         'time_step':               0.001,  # integration step size, seconds
         'simulation_time':         100,  # integration duration, seconds
-        'max_dist':                15  # max distance to integrate to, feet
+        'max_dist':                30  # max distance to integrate to, feet
     }
+
+    csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
+    line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    line_types = ['-', '--', '-.']
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
                  gear_ratio, wheel_radius, vehicle_mass, coeff_kinetic_friction, coeff_static_friction, battery_voltage,
@@ -52,10 +60,14 @@ class Model:
         # calculate Derived Constants
         self._convert_units_to_si()
 
-        self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / (
-            self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
+        self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / \
+                             (self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current *
+                              self.resistance_one * self.motor.free_speed + self.motor.stall_current *
+                              self.num_motors * self.resistance_com * self.motor.free_speed)
         self.torque_slope = (self.motor.stall_torque * self.motor.max_voltage) / (
-            self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
+            self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one *
+            self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com *
+            self.motor.free_speed)
         self.k_t = self.motor.stall_torque / self.motor.stall_current
         self.force_to_amps = self.wheel_radius / (
             self.num_motors * self.k_drivetrain_efficiency * self.gear_ratio * self.k_t)  # vehicle total force to per-motor amps conversion
@@ -86,9 +98,14 @@ class Model:
             self.is_slipping = True
         elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
             self.is_slipping = False
-        applied_force_at_wheel = (self.vehicle_weight * self.coeff_kinetic_friction) if self.is_slipping else available_force_at_wheel
+
+        if self.is_slipping:
+            applied_force_at_wheel = (self.vehicle_weight * self.coeff_kinetic_friction)
+        else:
+            applied_force_at_wheel = available_force_at_wheel
         self.sim_current_per_motor = applied_force_at_wheel * self.force_to_amps  # computed here for output
-        self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - self.sim_current_per_motor * self.resistance_one  # computed here for output
+        self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * \
+                                                  self.resistance_com - self.sim_current_per_motor * self.resistance_one  # computed here for output
         rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * wheel_speed  # rolling resistance force, in Newtons
         net_accel_force = applied_force_at_wheel - rolling_resistance  # net force available for acceleration, in Newtons
         if net_accel_force < 0:
@@ -97,7 +114,8 @@ class Model:
 
     def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
-        while self.sim_time < self.simulation_time + self.time_step and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
+        while self.sim_time < self.simulation_time + self.time_step and \
+                (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self._calc_max_accel(v_temp)
             v_temp = self.sim_speed + (
@@ -121,12 +139,12 @@ class Model:
 
     def _add_csv_line(self):
         self.csv_lines.append([self.sim_time, self.sim_distance * 3.28083, self.sim_speed * 3.28083,
-                               self.is_slipping, self.sim_acceleration * 3.28083,
+                               self.sim_acceleration * 3.28083,
                                self.num_motors * self.sim_current_per_motor / 10,
-                               self.sim_voltage])
+                               self.sim_voltage, self.is_slipping])
 
     def calc(self):
-        self.csv_lines.append(['t', 'feet', 'ft/s', 'slip', 'ft/s^2', 'amps/10', 'V'] +
+        self.csv_lines.append(self.csv_headers +
                               [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()] +
                               [e + "=" + str(self.motor.to_json()[e]) for e in self.motor.to_json()])
 
@@ -136,13 +154,49 @@ class Model:
         self._integrate_with_heun()  # numerically integrate and output using Heun's method
 
     def get_csv_str(self):
-        return "\n".join([",".join([str(format(e, '.5f') if isinstance(e, float) else e) for e in line]) for line in self.csv_lines])
+        return "\n".join([",".join([str(format(e, '.5f') if isinstance(e, float) else e) for e in line])
+                          for line in self.csv_lines])
 
     def print_csv(self):
         print(self.get_csv_str())
 
     def save_csv(self, filename):
         open(filename, "w+").write(self.get_csv_str())
+
+    def plot_data(self, ax, csv_lines, i=0):
+        t = [e[0] for e in csv_lines[1:]]
+        for j in range(len(self.line_types)):
+            line = self.line_colours[i % len(self.line_colours)] + self.line_types[j]
+            ax.plot(t, [e[j + 1] for e in csv_lines[1:]], line, label=self.csv_headers[j + 1])
+
+    def show_plot(self, compare_models=[]):
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots()
+
+        if not isinstance(compare_models, list):
+            compare_models = [compare_models]
+
+        ax.set(xlabel='time (s)', title='Drivetrain Acceleration Model')
+        ax.grid()
+
+        models = [self] + compare_models
+        for i in range(len(models)):
+            model = models[i]
+            self.plot_data(ax, model.csv_lines, i)
+        handles = []
+        handles += [patches.Patch(color=self.line_colours[i],
+                                  label='{0}x {1} @ {2} - {3}in'.format(
+                                          str(models[i].num_motors),
+                                          models[i].motor_type,
+                                          models[i].gear_ratio,
+                                          models[i].wheel_radius / 2.54 * 100))
+                    for i in range(len(models))]
+        handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
+                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]
+        plt.legend(handles=handles)
+
+        plt.show()
 
     def to_json(self):
         return self.config_backup

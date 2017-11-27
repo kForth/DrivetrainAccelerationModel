@@ -28,4 +28,12 @@ if __name__ == "__main__":
 
     model = Model.from_json(config)
     model.calc()
-    model.print_csv()
+
+    config2 = dict(config)
+    config2.update({
+        'gear_ratio': 11
+    })
+    model2 = Model.from_json(config2)
+    model2.calc()
+
+    model.show_plot(compare_models=[model2])
