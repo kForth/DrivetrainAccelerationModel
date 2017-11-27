@@ -47,7 +47,7 @@ class Model:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.config_backup = dict([(e, self.__dict__[e]) for e in Model.CONFIG_KEYS])
+        self.config_backup = dict([(e, self.__dict__[e]) for e in Model.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
         self.convert_units_to_si()
@@ -148,4 +148,6 @@ class Model:
 
     @staticmethod
     def from_json(data):
-        return Model(**data) if all([k in data.keys() for k in Model.SAMPLE_CONFIG.keys()]) else None
+        if all([k in data.keys() for k in Model.SAMPLE_CONFIG.keys()]) and len(data) == len(Model.SAMPLE_CONFIG):
+            return Model(**data)
+        return None
