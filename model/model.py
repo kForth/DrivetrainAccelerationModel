@@ -13,13 +13,13 @@ class Model:
 
         'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
         'k_rolling_resistance_v':  0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.9,  # drivetrain efficiency fraction
+        'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
         'wheel_radius':            3,  # wheel radius, inches
 
         'vehicle_mass':            150,  # vehicle mass, lbm
-        'coeff_kinetic_friction':  0.7,  # coefficient of kinetic friction
+        'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
         'coeff_static_friction':   1.0,  # coefficient of static friction
 
         'battery_voltage':         12.7,  # fully-charged open-circuit battery volts
@@ -83,15 +83,15 @@ class Model:
         self.vehicle_mass *= 0.4535924  # convert lbm to kg
 
     def calc_max_accel(self, wheel_speed):  # compute acceleration w/ slip
-        wheel_to_motor_speed = wheel_speed / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
-        max_torque_at_voltage = self.torque_offset - self.torque_slope * wheel_to_motor_speed  # available torque at motor @ V, in Newtons
+        motor_speed = wheel_speed / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
+        max_torque_at_voltage = self.torque_offset - self.torque_slope * motor_speed  # available torque at motor @ V, in Newtons
         max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
         available_force_at_wheel = max_torque_at_wheel / self.wheel_radius * self.num_motors  # available force at wheels
         if available_force_at_wheel > self.vehicle_weight * self.coeff_static_friction:
             self.is_slipping = True
         elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
             self.is_slipping = False
-        applied_force_at_wheel = available_force_at_wheel if self.is_slipping else self.vehicle_weight * self.coeff_kinetic_friction
+        applied_force_at_wheel = (self.vehicle_weight * self.coeff_kinetic_friction) if self.is_slipping else available_force_at_wheel
         self.sim_current_per_motor = applied_force_at_wheel * self.force_to_amps  # computed here for output
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - self.sim_current_per_motor * self.resistance_one  # computed here for output
         rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * wheel_speed  # rolling resistance force, in Newtons
@@ -102,8 +102,7 @@ class Model:
 
     def integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
-        while self.sim_time <= self.simulation_time + self.time_step \
-                and (self.sim_distance <= self.max_dist or self.max_dist <= 0):
+        while self.sim_time < self.simulation_time + self.time_step and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self.calc_max_accel(v_temp)
             v_temp = self.sim_speed + (
@@ -117,8 +116,8 @@ class Model:
     # for reference only not used:
     def integrate_with_euler(self):  # numerical integration using Euler's Method
         self.sim_time = self.time_step
-        while self.sim_time <= self.simulation_time + self.time_step \
-                and (self.sim_distance <= self.max_dist or self.max_dist <= 0):
+        while self.sim_time < self.simulation_time + self.time_step \
+                and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
             self.sim_speed += self.sim_acceleration * self.time_step
             self.sim_distance += self.sim_speed * self.time_step
             self.sim_acceleration = self.calc_max_accel(self.sim_speed)
@@ -132,7 +131,7 @@ class Model:
                                self.sim_voltage])
 
     def calc(self):
-        self.csv_lines.append(['t', 'feet', 'ft/s', 'ft/s^2', 'amps/10', 'V'] +
+        self.csv_lines.append(['t', 'feet', 'ft/s', 'slip', 'ft/s^2', 'amps/10', 'V'] +
                               [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])
 
         self.sim_acceleration = self.calc_max_accel(self.sim_speed)  # compute accel at t=0
@@ -140,14 +139,14 @@ class Model:
 
         self.integrate_with_heun()  # numerically integrate and output using Heun's method
 
-    def get_csv(self):
-        return "\n".join([",".join([str(format(e, '.5f') if type(e) == type(1.0) else e) for e in line]) for line in self.csv_lines])
+    def get_csv_str(self):
+        return "\n".join([",".join([str(format(e, '.5f') if isinstance(e, float) else e) for e in line]) for line in self.csv_lines])
 
     def print_csv(self):
-        print(self.get_csv())
+        print(self.get_csv_str())
 
     def save_csv(self, filename):
-        open(filename, "w+").write(self.get_csv())
+        open(filename, "w+").write(self.get_csv_str())
 
     def to_json(self):
         return self.config_backup
