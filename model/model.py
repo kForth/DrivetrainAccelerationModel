@@ -2,11 +2,6 @@ from model.motors import MOTOR_LOOKUP
 
 
 class Model:
-    CONFIG_KEYS = ['motor_type', 'num_motors', 'k_rolling_resistance_s', 'k_rolling_resistance_v',
-                   'k_drivetrain_efficiency', 'gear_ratio', 'wheel_radius', 'vehicle_mass',
-                   'coeff_kinetic_friction', 'coeff_static_friction', 'battery_voltage',
-                   'resistance_com', 'resistance_one', 'time_step', 'simulation_time']
-
     SAMPLE_CONFIG = {
         'motor_type':              'CIM',  # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
         'num_motors':              4,  # number of motors
@@ -153,4 +148,4 @@ class Model:
 
     @staticmethod
     def from_json(data):
-        return Model(**data) if all([k in data.keys() for k in Model.CONFIG_KEYS]) else None
+        return Model(**data) if all([k in data.keys() for k in Model.SAMPLE_CONFIG.keys()]) else None
