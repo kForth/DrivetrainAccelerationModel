@@ -82,21 +82,19 @@ class Model:
         self.wheel_radius = self.wheel_radius * 2.54 / 100  # convert inches to meters
         self.vehicle_mass *= 0.4535924  # convert lbm to kg
 
-    def calc_max_accel(self, V):  # compute acceleration w/ slip
-        motor_to_wheel_speed = V / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
-        max_torque_at_voltage = self.torque_offset - self.torque_slope * motor_to_wheel_speed  # available torque at motor @ V, in Newtons
+    def calc_max_accel(self, wheel_speed):  # compute acceleration w/ slip
+        wheel_to_motor_speed = wheel_speed / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
+        max_torque_at_voltage = self.torque_offset - self.torque_slope * wheel_to_motor_speed  # available torque at motor @ V, in Newtons
         max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
         available_force_at_wheel = max_torque_at_wheel / self.wheel_radius * self.num_motors  # available force at wheels
-        applied_force_at_wheel = 0  # slip-adjusted vehicle force due to wheel torque
         if available_force_at_wheel > self.vehicle_weight * self.coeff_static_friction:
             self.is_slipping = True
-            applied_force_at_wheel = self.vehicle_weight * self.coeff_kinetic_friction
-        elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
+        else:
             self.is_slipping = False
-            applied_force_at_wheel = available_force_at_wheel
+        applied_force_at_wheel = available_force_at_wheel if self.is_slipping else self.vehicle_weight * self.coeff_kinetic_friction
         self.sim_current_per_motor = applied_force_at_wheel * self.force_to_amps  # computed here for output
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - self.sim_current_per_motor * self.resistance_one  # computed here for output
-        rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * V  # rolling resistance force, in Newtons
+        rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * wheel_speed  # rolling resistance force, in Newtons
         net_accel_force = applied_force_at_wheel - rolling_resistance  # net force available for acceleration, in Newtons
         if net_accel_force < 0:
             net_accel_force = 0
@@ -108,7 +106,8 @@ class Model:
                 and (self.sim_distance <= self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self.calc_max_accel(v_temp)
-            v_temp = self.sim_speed + (self.sim_acceleration + a_temp) / 2 * self.time_step  # recalc v_temp trapezoidally
+            v_temp = self.sim_speed + (
+                                          self.sim_acceleration + a_temp) / 2 * self.time_step  # recalc v_temp trapezoidally
             self.sim_acceleration = self.calc_max_accel(v_temp)  # update a
             self.sim_distance += (self.sim_speed + v_temp) / 2 * self.time_step  # update x trapezoidally
             self.sim_speed = v_temp  # update V
