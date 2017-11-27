@@ -7,6 +7,14 @@ class Motor(object):
     def __init__(self):
         self.free_speed *= 2 * 3.1415926536 / 60  # convert RPM to rad/sec
 
+    def to_json(self):
+        return {
+            'max_voltage': self.max_voltage,
+            'free_speed': self.free_speed / (2 * 3.1415926536 / 60),
+            'stall_torque': self.stall_torque,
+            'stall_current': self.stall_current
+        }
+
 
 class CIM(Motor):
     max_voltage = 12

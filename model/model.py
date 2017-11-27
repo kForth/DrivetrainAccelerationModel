@@ -50,7 +50,7 @@ class Model:
         self.config_backup = dict([(e, self.__dict__[e]) for e in Model.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
-        self.convert_units_to_si()
+        self._convert_units_to_si()
 
         self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / (
             self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
@@ -71,13 +71,13 @@ class Model:
 
         self.csv_lines = []
 
-    def convert_units_to_si(self):
+    def _convert_units_to_si(self):
         self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
         self.k_rolling_resistance_v *= 4.448222 * 3.28083  # convert lbf/(ft/s) to Newtons/(meter/sec)
         self.wheel_radius = self.wheel_radius * 2.54 / 100  # convert inches to meters
         self.vehicle_mass *= 0.4535924  # convert lbm to kg
 
-    def calc_max_accel(self, wheel_speed):  # compute acceleration w/ slip
+    def _calc_max_accel(self, wheel_speed):  # compute acceleration w/ slip
         motor_speed = wheel_speed / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
         max_torque_at_voltage = self.torque_offset - self.torque_slope * motor_speed  # available torque at motor @ V, in Newtons
         max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
@@ -95,31 +95,31 @@ class Model:
             net_accel_force = 0
         return net_accel_force / self.vehicle_mass
 
-    def integrate_with_heun(self):  # numerical integration using Heun's Method
+    def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
         while self.sim_time < self.simulation_time + self.time_step and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
-            a_temp = self.calc_max_accel(v_temp)
+            a_temp = self._calc_max_accel(v_temp)
             v_temp = self.sim_speed + (
                                           self.sim_acceleration + a_temp) / 2 * self.time_step  # recalc v_temp trapezoidally
-            self.sim_acceleration = self.calc_max_accel(v_temp)  # update a
+            self.sim_acceleration = self._calc_max_accel(v_temp)  # update a
             self.sim_distance += (self.sim_speed + v_temp) / 2 * self.time_step  # update x trapezoidally
             self.sim_speed = v_temp  # update V
-            self.add_csv_line()
+            self._add_csv_line()
             self.sim_time += self.time_step
 
     # for reference only not used:
-    def integrate_with_euler(self):  # numerical integration using Euler's Method
+    def _integrate_with_euler(self):  # numerical integration using Euler's Method
         self.sim_time = self.time_step
         while self.sim_time < self.simulation_time + self.time_step \
                 and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
             self.sim_speed += self.sim_acceleration * self.time_step
             self.sim_distance += self.sim_speed * self.time_step
-            self.sim_acceleration = self.calc_max_accel(self.sim_speed)
-            self.add_csv_line()
+            self.sim_acceleration = self._calc_max_accel(self.sim_speed)
+            self._add_csv_line()
             self.sim_time += self.time_step
 
-    def add_csv_line(self):
+    def _add_csv_line(self):
         self.csv_lines.append([self.sim_time, self.sim_distance * 3.28083, self.sim_speed * 3.28083,
                                self.is_slipping, self.sim_acceleration * 3.28083,
                                self.num_motors * self.sim_current_per_motor / 10,
@@ -127,12 +127,13 @@ class Model:
 
     def calc(self):
         self.csv_lines.append(['t', 'feet', 'ft/s', 'slip', 'ft/s^2', 'amps/10', 'V'] +
-                              [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])
+                              [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()] +
+                              [e + "=" + str(self.motor.to_json()[e]) for e in self.motor.to_json()])
 
-        self.sim_acceleration = self.calc_max_accel(self.sim_speed)  # compute accel at t=0
-        self.add_csv_line()  # output values at t=0
+        self.sim_acceleration = self._calc_max_accel(self.sim_speed)  # compute accel at t=0
+        self._add_csv_line()  # output values at t=0
 
-        self.integrate_with_heun()  # numerically integrate and output using Heun's method
+        self._integrate_with_heun()  # numerically integrate and output using Heun's method
 
     def get_csv_str(self):
         return "\n".join([",".join([str(format(e, '.5f') if isinstance(e, float) else e) for e in line]) for line in self.csv_lines])
