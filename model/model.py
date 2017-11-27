@@ -89,7 +89,7 @@ class Model:
         available_force_at_wheel = max_torque_at_wheel / self.wheel_radius * self.num_motors  # available force at wheels
         if available_force_at_wheel > self.vehicle_weight * self.coeff_static_friction:
             self.is_slipping = True
-        else:
+        elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
             self.is_slipping = False
         applied_force_at_wheel = available_force_at_wheel if self.is_slipping else self.vehicle_weight * self.coeff_kinetic_friction
         self.sim_current_per_motor = applied_force_at_wheel * self.force_to_amps  # computed here for output
