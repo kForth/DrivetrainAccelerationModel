@@ -5,14 +5,13 @@ class Motor(object):
     stall_current = 1  # Amps
 
     def __init__(self):
-        self.stall_torque *= 0.00706155  # convert oz_in to Newton_meters
         self.free_speed *= 2 * 3.1415926536 / 60  # convert RPM to rad/sec
 
 
 class CIM(Motor):
     max_voltage = 12
     free_speed = 5310
-    stall_torque = 343.4
+    stall_torque = 2.41
     stall_current = 133
 
 
