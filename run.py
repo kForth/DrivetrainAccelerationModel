@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
         'vehicle_mass':            150,  # vehicle mass, lbm
         'coeff_kinetic_friction':  0.7,  # coefficient of kinetic friction
+        'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
         'coeff_static_friction':   1.0,  # coefficient of static friction
 
         'battery_voltage':         12.7,  # fully-charged open-circuit battery volts
@@ -22,7 +23,8 @@ if __name__ == "__main__":
         'resistance_one':          0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
         'time_step':               0.001,  # integration step size, seconds
-        'simulation_time':         1.0  # integration duration, seconds
+        'simulation_time':         100,  # integration duration, seconds
+        'max_dist':                15  # max distance to integrate to, feet
     }
 
     model = Model.from_json(config)
