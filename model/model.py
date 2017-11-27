@@ -29,7 +29,7 @@ class Model:
 
         'time_step':               0.001,  # integration step size, seconds
         'simulation_time':         100,  # integration duration, seconds
-        'max_dist':                -1  # max distance to integrate to, feet
+        'max_dist':                15  # max distance to integrate to, feet
     }
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
@@ -104,7 +104,8 @@ class Model:
 
     def integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
-        while self.sim_time <= self.simulation_time + self.time_step and self.sim_distance <= self.max_dist:
+        while self.sim_time <= self.simulation_time + self.time_step \
+                and (self.sim_distance <= self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self.calc_max_accel(v_temp)
             v_temp = self.sim_speed + (self.sim_acceleration + a_temp) / 2 * self.time_step  # recalc v_temp trapezoidally
@@ -117,7 +118,8 @@ class Model:
     # for reference only not used:
     def integrate_with_euler(self):  # numerical integration using Euler's Method
         self.sim_time = self.time_step
-        while self.sim_time <= self.simulation_time + self.time_step:
+        while self.sim_time <= self.simulation_time + self.time_step \
+                and (self.sim_distance <= self.max_dist or self.max_dist <= 0):
             self.sim_speed += self.sim_acceleration * self.time_step
             self.sim_distance += self.sim_speed * self.time_step
             self.sim_acceleration = self.calc_max_accel(self.sim_speed)
