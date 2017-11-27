@@ -8,27 +8,27 @@ class Model:
                    'resistance_com', 'resistance_one', 'time_step', 'simulation_time']
 
     SAMPLE_CONFIG = {
-        'motor_type':              'CIM',
-        'num_motors':              4,
+        'motor_type':              'CIM',  # type of motor
+        'num_motors':              4,  # number of motors
 
-        'k_rolling_resistance_s':  10,
-        'k_rolling_resistance_v':  0,
-        'k_drivetrain_efficiency': 0.9,
+        'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
+        'k_rolling_resistance_v':  0,  # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_drivetrain_efficiency': 0.9,  # drivetrain efficiency fraction
 
-        'gear_ratio':              12.75,
-        'wheel_radius':            3,
+        'gear_ratio':              12.75,  # gear ratio
+        'wheel_radius':            3,  # wheel radius, inches
 
-        'vehicle_mass':            150,
-        'coeff_kinetic_friction':  0.7,
-        'coeff_static_friction':   1.0,
+        'vehicle_mass':            150,  # vehicle mass, lbm
+        'coeff_kinetic_friction':  0.7,  # coefficient of kinetic friction
+        'coeff_static_friction':   1.0,  # coefficient of static friction
 
-        'battery_voltage':         12.7,
+        'battery_voltage':         12.7,  # fully-charged open-circuit battery volts
 
-        'resistance_com':          0.013,
-        'resistance_one':          0.002,
+        'resistance_com':          0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
+        'resistance_one':          0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
-        'time_step':               0.001,
-        'simulation_time':         1.0
+        'time_step':               0.001,  # integration step size, seconds
+        'simulation_time':         1.0  # integration duration, seconds
     }
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
@@ -55,10 +55,13 @@ class Model:
         # calculate Derived Constants
         self.convert_units_to_si()
 
-        self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / (self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
-        self.torque_slope = (self.motor.stall_torque * self.motor.max_voltage) / (self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
+        self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / (
+        self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
+        self.torque_slope = (self.motor.stall_torque * self.motor.max_voltage) / (
+        self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current * self.resistance_one * self.motor.free_speed + self.motor.stall_current * self.num_motors * self.resistance_com * self.motor.free_speed)
         self.k_t = self.motor.stall_torque / self.motor.stall_current
-        self.force_to_amps = self.wheel_radius / (self.num_motors * self.k_drivetrain_efficiency * self.gear_ratio * self.k_t)  # vehicle total force to per-motor amps conversion
+        self.force_to_amps = self.wheel_radius / (
+        self.num_motors * self.k_drivetrain_efficiency * self.gear_ratio * self.k_t)  # vehicle total force to per-motor amps conversion
         self.vehicle_weight = self.vehicle_mass * 9.80665  # vehicle weight, Newtons
 
         self.is_slipping = False  # state variable, init to false
@@ -127,7 +130,8 @@ class Model:
 
     def calc(self):
         self.csv_str += ",".join(['t', 'feet', 'ft/s', 'ft/s^2', 'amps/10', 'V'])
-        self.csv_str += "," + ",".join(map(str, [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])) + "\n"
+        self.csv_str += "," + ",".join(
+            map(str, [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])) + "\n"
 
         self.sim_acceleration = self.calc_max_accel(self.sim_speed)  # compute accel at t=0
         self.add_csv_line()  # output values at t=0
