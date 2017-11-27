@@ -74,7 +74,7 @@ class Model:
         self.sim_acceleration = 0  # vehicle acceleration, meters/sec/sec
         self.sim_current_per_motor = 0  # current per motor, amps
 
-        self.csv_str = ""
+        self.csv_lines = []
 
     def convert_units_to_si(self):
         self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
@@ -127,22 +127,28 @@ class Model:
             self.sim_time += self.time_step
 
     def add_csv_line(self):
-        self.csv_str += ",".join(map(str, [self.sim_time, self.sim_distance * 3.28083, self.sim_speed * 3.28083,
-                                           self.is_slipping, self.sim_acceleration * 3.28083,
-                                           self.num_motors * self.sim_current_per_motor / 10, self.sim_voltage])) + "\n"
+        self.csv_lines.append([self.sim_time, self.sim_distance * 3.28083, self.sim_speed * 3.28083,
+                               self.is_slipping, self.sim_acceleration * 3.28083,
+                               self.num_motors * self.sim_current_per_motor / 10,
+                               self.sim_voltage])
 
     def calc(self):
-        self.csv_str += ",".join(['t', 'feet', 'ft/s', 'ft/s^2', 'amps/10', 'V'])
-        self.csv_str += "," + ",".join(
-                map(str, [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])) + "\n"
+        self.csv_lines.append(['t', 'feet', 'ft/s', 'ft/s^2', 'amps/10', 'V'] +
+                              [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()])
 
         self.sim_acceleration = self.calc_max_accel(self.sim_speed)  # compute accel at t=0
         self.add_csv_line()  # output values at t=0
 
         self.integrate_with_heun()  # numerically integrate and output using Heun's method
 
+    def get_csv(self):
+        return "\n".join([",".join([str(format(e, '.5f') if type(e) == type(1.0) else e) for e in line]) for line in self.csv_lines])
+
     def print_csv(self):
-        print(self.csv_str)
+        print(self.get_csv())
+
+    def save_csv(self, filename):
+        open(filename, "w+").write(self.get_csv())
 
     def to_json(self):
         return self.config_backup
