@@ -7,13 +7,12 @@ if __name__ == "__main__":
 
         'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
         'k_rolling_resistance_v':  0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.9,  # drivetrain efficiency fraction
+        'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
         'wheel_radius':            3,  # wheel radius, inches
 
         'vehicle_mass':            150,  # vehicle mass, lbm
-        'coeff_kinetic_friction':  0.7,  # coefficient of kinetic friction
         'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
         'coeff_static_friction':   1.0,  # coefficient of static friction
 
