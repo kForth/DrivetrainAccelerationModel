@@ -8,7 +8,7 @@ class Model:
                    'resistance_com', 'resistance_one', 'time_step', 'simulation_time']
 
     SAMPLE_CONFIG = {
-        'motor_type':              'CIM',  # type of motor
+        'motor_type':              'CIM',  # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
         'num_motors':              4,  # number of motors
 
         'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf

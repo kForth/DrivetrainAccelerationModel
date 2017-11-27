@@ -10,9 +10,9 @@ class Motor(object):
 
 class CIM(Motor):
     max_voltage = 12
-    free_speed = 5310
+    free_speed = 5330
     stall_torque = 2.41
-    stall_current = 133
+    stall_current = 131
 
 
 class MiniCIM(Motor):
