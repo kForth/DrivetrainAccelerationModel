@@ -11,7 +11,7 @@ Full python source code.
 You can output the data as a CSV for easy use in excel or you can view it as a plot thru matplotlib.
 
 ### Sample Plot
-![Sample Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/sample.png "Sample plot comparing 3 different gear ratios.")
+![Sample Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/sample.png "Sample plot comparing 3 different gear ratios.")
 
 ### Sample CSV
 |time(*s*)|dist(*ft*)|speed(*ft/s*)|accel(*ft/s^2*)|current(*amps/10*)|voltage|slip|
@@ -28,3 +28,12 @@ You can output the data as a CSV for easy use in excel or you can view it as a p
 |0.00900|0.00096|0.21235|23.59423|24.77243|9.35572|True|
 |0.01000|0.00118|0.23594|23.59423|24.77243|9.35572|True|
 |0.01100|0.00143|0.25954|23.59423|24.77243|9.35572|True|
+
+
+##Optimization
+
+I've also been playing with ratio optimization, you can see my work in optimize.py.
+
+![Sample Optimize Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/optimize.png "Sample optimzation plot for a 150kg 6x MiniCIM robot.")
+
+![Sample Optimize CSV](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/optimize_csv.png "Sample optimzation csv for a 150kg 6x MiniCIM robot.")
