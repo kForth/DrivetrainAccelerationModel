@@ -187,11 +187,11 @@ class Model:
             self.plot_data(ax, model.csv_lines, i)
         handles = []
         handles += [patches.Patch(color=self.line_colours[i],
-                                  label='{0}x {1} @ {2} - {3}in'.format(
+                                  label='{0}x {1} @ {2}:1 - {3}in'.format(
                                           str(models[i].num_motors),
                                           models[i].motor_type,
                                           models[i].gear_ratio,
-                                          round(models[i].wheel_diameter / 2.54 * 100, 2)))
+                                          models[i].wheel_diameter))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
                                  label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]
