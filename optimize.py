@@ -3,6 +3,10 @@ from model import Model
 import better_exceptions
 
 if __name__ == "__main__":
+    save_csv = False
+    plot = False
+    save_xlsx = True
+
     min_ratio = 2
     max_ratio = 20
     ratio_step = 0.5
@@ -71,31 +75,82 @@ if __name__ == "__main__":
 
         distance_at_time += [[e['sim_distance'] for e in model.data_points]]
 
-    with open('samples/optimize-time_to_dist.csv', 'w+') as file:
-        file.write(",".join([""] + [str(e) for e in distances]) + "\n")
-        file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in time_to_dist_data[i]]) for i in range(len(time_to_dist_data))]))
+    if save_csv:
+        with open('samples/optimize-time_to_dist.csv', 'w+') as file:
+            file.write(",".join([""] + [str(e) for e in distances]) + "\n")
+            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in time_to_dist_data[i]]) for i in range(len(time_to_dist_data))]))
 
-    with open('samples/optimize-distance_at_time.csv', 'w+') as file:
-        file.write(",".join([""] + [str(e) for e in times]) + "\n")
-        file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in distance_at_time[i]]) for i in range(len(distance_at_time))]))
+        with open('samples/optimize-distance_at_time.csv', 'w+') as file:
+            file.write(",".join([""] + [str(e) for e in times]) + "\n")
+            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in distance_at_time[i]]) for i in range(len(distance_at_time))]))
 
-    from mpl_toolkits.mplot3d import Axes3D
-    import matplotlib.pyplot as plt
-    import numpy as np
+    if plot:
+        from mpl_toolkits.mplot3d import Axes3D
+        import matplotlib.pyplot as plt
+        import numpy as np
 
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
 
-    X = np.array(distances)
-    Y = np.array(ratios)
-    X, Y = np.meshgrid(X, Y)
-    Z = np.array(time_to_dist_data)
+        X = np.array(distances)
+        Y = np.array(ratios)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.array(time_to_dist_data)
 
-    ax.set_xlabel('Distance (ft)')
-    ax.set_ylabel('Ratio (n:1)')
-    ax.set_zlabel('Time to Dist (s)')
+        ax.set_xlabel('Distance (ft)')
+        ax.set_ylabel('Ratio (n:1)')
+        ax.set_zlabel('Time to Dist (s)')
 
-    surf = ax.plot_surface(X, Y, Z, cmap=plt.get_cmap('Greens'), linewidth=0, antialiased=False)
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+        surf = ax.plot_surface(X, Y, Z, cmap=plt.get_cmap('Greens'), linewidth=0, antialiased=False)
+        fig.colorbar(surf, shrink=0.5, aspect=5)
 
-    plt.show()
+        plt.show()
+
+    if save_xlsx:
+        import xlsxwriter
+
+        workbook = xlsxwriter.Workbook('samples/optimize.xlsx')
+        worksheet = workbook.add_worksheet()
+        worksheet.freeze_panes(2, 2)
+        worksheet.set_row(0, 50)
+        worksheet.set_column(0, 0, 10)
+        worksheet.set_column(1, len(distances) + 1, 5)
+        top_header_format = workbook.add_format({
+            'align': 'center',
+            'valign': 'vcenter',
+            'font_size': 28
+        })
+        side_header_format = workbook.add_format({
+            'align': 'center',
+            'valign': 'vcenter',
+            'font_size': 28,
+            'rotation': 90
+        })
+        worksheet.merge_range(0, 0, 1, 1, "Time (s)", top_header_format)
+        worksheet.merge_range(0, 2, 0, len(distances) + 1, "Distance (ft)", top_header_format)
+        worksheet.merge_range(2, 0, len(ratios) + 1, 0, "Ratio (n:1)", side_header_format)
+
+        for col in range(len(distances)):
+            worksheet.write(1, col+2, distances[col])
+
+        for row in range(len(ratios)):
+            worksheet.write(row+2, 1, ratios[row])
+
+        test_data = dict()
+        test_data.update(model.to_json())
+        test_data.update(model.motor.to_json())
+        for i in range(len(model.to_json())):
+            key = list(test_data.keys())[i]
+            worksheet.write(0, len(distances) + 2 + i, "{0}= {1}".format(key, test_data[key]))
+
+        for col in range(len(distances)):
+            worksheet.conditional_format(2, col + 2, len(ratios) + 1, col + 2, {
+                'type': '3_color_scale',
+                'min_color': '#00ee00',
+                'mid_color': '#ffffff',
+                'max_color': '#ee0000'
+            })
+            for row in range(len(ratios)):
+                worksheet.write(row + 2, col + 2, time_to_dist_data[row][col])
+
+        workbook.close()
