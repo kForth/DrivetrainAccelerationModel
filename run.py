@@ -30,13 +30,17 @@ if __name__ == "__main__":
     model.calc()
 
     config.update({
-        'gear_ratio': 15
+        'gear_ratio': 15,
+        'max_dist': 0,
+        'simulation_time': model.data_points[-1]['sim_time']
     })
     model2 = Model.from_json(config)
     model2.calc()
 
     config.update({
-        'gear_ratio': 9
+        'gear_ratio': 9,
+        'max_dist': 0,
+        'simulation_time': model.data_points[-1]['sim_time']
     })
     model3 = Model.from_json(config)
     model3.calc()
