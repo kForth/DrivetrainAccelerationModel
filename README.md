@@ -8,4 +8,23 @@ Full python source code.
 
 2nd-order numerical integration using Heun's Method.
 
-CSV output file can be directly imported into Excel for graphing acceleration, speed, distance, motor amps, and motor voltage vs time.
+You can output the data as a CSV for easy use in excel or you can view it as a plot thru matplotlib.
+
+### Sample Plot
+![Sample Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/sample.png "Sample plot comparing 3 different gear ratios.")
+
+### Sample Data
+|time(*s*)|dist(*ft*)|speed(*ft/s*)|accel(*ft/s^2*)|current(*amps/10*)|voltage|slip|
+|:--- | :--- | :--- | :--- | :--- | :--- |:--- |
+|0|0.00000|0.00000|23.59423|24.77243|9.35572|True|
+|0.00100|0.00001|0.02359|23.59423|24.77243|9.35572|True|
+|0.00200|0.00005|0.04719|23.59423|24.77243|9.35572|True|
+|0.00300|0.00011|0.07078|23.59423|24.77243|9.35572|True|
+|0.00400|0.00019|0.09438|23.59423|24.77243|9.35572|True|
+|0.00500|0.00029|0.11797|23.59423|24.77243|9.35572|True|
+|0.00600|0.00042|0.14157|23.59423|24.77243|9.35572|True|
+|0.00700|0.00058|0.16516|23.59423|24.77243|9.35572|True|
+|0.00800|0.00076|0.18875|23.59423|24.77243|9.35572|True|
+|0.00900|0.00096|0.21235|23.59423|24.77243|9.35572|True|
+|0.01000|0.00118|0.23594|23.59423|24.77243|9.35572|True|
+|0.01100|0.00143|0.25954|23.59423|24.77243|9.35572|True|
