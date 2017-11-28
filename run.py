@@ -30,9 +30,15 @@ if __name__ == "__main__":
     model.calc()
 
     config.update({
-        'gear_ratio': 11
+        'gear_ratio': 15
     })
     model2 = Model.from_json(config)
     model2.calc()
 
-    model.show_plot(compare_models=[model2])
+    config.update({
+        'gear_ratio': 9
+    })
+    model3 = Model.from_json(config)
+    model3.calc()
+
+    model.show_plot(compare_models=[model2, model3])

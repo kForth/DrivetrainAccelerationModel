@@ -13,7 +13,7 @@ You can output the data as a CSV for easy use in excel or you can view it as a p
 ### Sample Plot
 ![Sample Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/sample.png "Sample plot comparing 3 different gear ratios.")
 
-### Sample Data
+### Sample CSV
 |time(*s*)|dist(*ft*)|speed(*ft/s*)|accel(*ft/s^2*)|current(*amps/10*)|voltage|slip|
 |:--- | :--- | :--- | :--- | :--- | :--- |:--- |
 |0|0.00000|0.00000|23.59423|24.77243|9.35572|True|
