@@ -190,7 +190,7 @@ class Model:
                                           str(models[i].num_motors),
                                           models[i].motor_type,
                                           models[i].gear_ratio,
-                                          models[i].wheel_radius / 2.54 * 100))
+                                          round(models[i].wheel_radius / 2.54 * 100), 2))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
                                  label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]
