@@ -37,5 +37,5 @@ I've also been playing with ratio optimization, you can see my work in optimize.
 ### Sample Optimization Plot
 ![Sample Optimize Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/optimize.png "Sample optimization plot for a 150kg 6x MiniCIM robot. (optimize-time_to_dist.csv)")
 
-### Sample Optimization CSV in Excel
-![Sample Optimize CSV](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/optimize_csv.png "Sample optimization csv for a 150kg 6x MiniCIM robot. (optimize-time_to_dist.csv)")
+### Sample Optimization XLSX
+![Sample Optimize CSV](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/optimize_xlsx.png "Sample optimization xlsx for a 150kg 6x MiniCIM robot. (optimize-time_to_dist.csv)")
