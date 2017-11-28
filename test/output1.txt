@@ -1,4 +1,4 @@
-time(s),dist(ft),speed(ft/s),accel(ft/s^2),current(amps/10),voltage,slip,motor_type=CIM,num_motors=4,k_rolling_resistance_s=10,k_rolling_resistance_v=0,k_drivetrain_efficiency=0.7,gear_ratio=12.75,wheel_radius=3,vehicle_mass=150,coeff_kinetic_friction=0.8,coeff_static_friction=1.0,battery_voltage=12.7,resistance_com=0.013,resistance_one=0.002,time_step=0.001,simulation_time=100,max_dist=15,max_voltage=12,free_speed=5330.0,stall_torque=2.41,stall_current=131
+time(s),dist(ft),speed(ft/s),accel(ft/s^2),current(amps/10),voltage,slip,motor_type=CIM,num_motors=4,k_rolling_resistance_s=10,k_rolling_resistance_v=0,k_drivetrain_efficiency=0.7,gear_ratio=12.75,wheel_diameter=6,vehicle_mass=150,coeff_kinetic_friction=0.8,coeff_static_friction=1.0,battery_voltage=12.7,resistance_com=0.013,resistance_one=0.002,time_step=0.001,simulation_time=100,max_dist=15,max_voltage=12,free_speed=5330.0,stall_torque=2.41,stall_current=131
 0,0.00000,0.00000,23.59423,24.77243,9.35572,True
 0.00100,0.00001,0.02359,23.59423,24.77243,9.35572,True
 0.00200,0.00005,0.04719,23.59423,24.77243,9.35572,True

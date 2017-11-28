@@ -6,7 +6,7 @@ def test_load_from_json():
     model = Model.from_json(config)
     config['k_rolling_resistance_s'] *= 4.448222  # convert lbf to Newtons
     config['k_rolling_resistance_v'] *= 4.448222 * 3.28083  # convert lbf/(ft/s) to Newtons/(meter/sec)
-    config['wheel_radius'] = config['wheel_radius'] * 2.54 / 100  # convert inches to meters
+    config['wheel_diameter'] = config['wheel_diameter']  # convert inches to meters
     config['vehicle_mass'] *= 0.4535924  # convert lbm to kg
 
     bad_keys = []
@@ -28,7 +28,7 @@ def test_output1():
         'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
-        'wheel_radius':            3,  # wheel radius, inches
+        'wheel_diameter':          6,  # wheel radius, inches
 
         'vehicle_mass':            150,  # vehicle mass, lbm
         'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction

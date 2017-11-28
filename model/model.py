@@ -15,7 +15,7 @@ class Model:
         'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
-        'wheel_radius':            3,  # wheel radius, inches
+        'wheel_diameter':          6,  # wheel radius, inches
 
         'vehicle_mass':            150,  # vehicle mass, lbm
         'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
@@ -36,7 +36,7 @@ class Model:
     line_types = ['-', '--', '-.']
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
-                 gear_ratio, wheel_radius, vehicle_mass, coeff_kinetic_friction, coeff_static_friction, battery_voltage,
+                 gear_ratio, wheel_diameter, vehicle_mass, coeff_kinetic_friction, coeff_static_friction, battery_voltage,
                  resistance_com, resistance_one, time_step, simulation_time, max_dist):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')]()
@@ -45,7 +45,8 @@ class Model:
         self.k_rolling_resistance_v = k_rolling_resistance_v
         self.k_drivetrain_efficiency = k_drivetrain_efficiency
         self.gear_ratio = gear_ratio
-        self.wheel_radius = wheel_radius
+        self.wheel_diameter = wheel_diameter
+        self.wheel_radius = wheel_diameter * 0.5
         self.vehicle_mass = vehicle_mass
         self.coeff_kinetic_friction = coeff_kinetic_friction
         self.coeff_static_friction = coeff_static_friction
@@ -190,7 +191,7 @@ class Model:
                                           str(models[i].num_motors),
                                           models[i].motor_type,
                                           models[i].gear_ratio,
-                                          round(models[i].wheel_radius / 2.54 * 100, 2)))
+                                          round(models[i].wheel_diameter / 2.54 * 100, 2)))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
                                  label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]

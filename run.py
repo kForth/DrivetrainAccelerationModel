@@ -10,7 +10,7 @@ if __name__ == "__main__":
         'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
-        'wheel_radius':            3,  # wheel radius, inches
+        'wheel_diameter':          6,  # wheel diameter, inches
 
         'vehicle_mass':            150,  # vehicle mass, lbm
         'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
         'time_step':               0.001,  # integration step size, seconds
         'simulation_time':         100,  # integration duration, seconds
-        'max_dist':                15  # max distance to integrate to, feet
+        'max_dist':                30  # max distance to integrate to, feet
     }
 
     model = Model.from_json(config)
