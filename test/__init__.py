@@ -1,9 +1,9 @@
-from model import Model
+from model import DrivetrainModel
 
 
 def test_load_from_json():
-    config = dict(Model.SAMPLE_CONFIG)
-    model = Model.from_json(config)
+    config = dict(DrivetrainModel.SAMPLE_CONFIG)
+    model = DrivetrainModel.from_json(config)
     config['k_rolling_resistance_s'] *= 4.448222  # convert lbf to Newtons
     config['k_rolling_resistance_v'] *= 4.448222 * 3.28083  # convert lbf/(ft/s) to Newtons/(meter/sec)
     config['wheel_diameter'] = config['wheel_diameter']  # convert inches to meters
@@ -43,7 +43,7 @@ def test_output1():
         'simulation_time':         100,  # integration duration, seconds
         'max_dist':                15  # max distance to integrate to, feet
     }
-    model = Model.from_json(config)
+    model = DrivetrainModel.from_json(config)
     model.calc()
     return model.get_csv_str() == output1
 

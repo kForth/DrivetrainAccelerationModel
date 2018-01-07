@@ -1,4 +1,4 @@
-from model import Model
+from model import DrivetrainModel
 
 import better_exceptions
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         config.update({
             'gear_ratio': ratio
         })
-        model = Model.from_json(config)
+        model = DrivetrainModel.from_json(config)
         model.calc()
 
         time_to_dist_row = [int(0)] * len(distances)

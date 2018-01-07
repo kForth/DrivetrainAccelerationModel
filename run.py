@@ -1,4 +1,4 @@
-from model import Model
+from model import DrivetrainModel
 
 if __name__ == "__main__":
     config = {
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         'max_dist':                30        # max distance to integrate to, feet
     }
 
-    model = Model.from_json(config)
+    model = DrivetrainModel.from_json(config)
     model.calc()
 
     config.update({
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model2 = Model.from_json(config)
+    model2 = DrivetrainModel.from_json(config)
     model2.calc()
 
     config.update({
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model3 = Model.from_json(config)
+    model3 = DrivetrainModel.from_json(config)
     model3.calc()
 
     model.show_plot(compare_models=[model2, model3])

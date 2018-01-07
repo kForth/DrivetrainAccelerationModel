@@ -1,37 +1,35 @@
 from collections import OrderedDict
 from math import pi
 
-from matplotlib import lines
-from matplotlib import patches
+from matplotlib import lines, patches
 
 from model.motors import MOTOR_LOOKUP
 
 
-class Model:
+class DrivetrainModel:
     SAMPLE_CONFIG = {
-        'motor_type':              'CIM',
-        # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
-        'num_motors':              4,  # number of motors
+        'motor_type':              'CIM',   # type of motor
+        'num_motors':              4,       # number of motors
 
-        'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v':  0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
+        'k_rolling_resistance_s':  10,      # rolling resistance tuning parameter, lbf
+        'k_rolling_resistance_v':  0,       # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_drivetrain_efficiency': 0.7,     # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,  # gear ratio
-        'wheel_diameter':          6,  # wheel radius, inches
+        'wheel_diameter':          6,      # wheel radius, inches
 
-        'vehicle_mass':            150,  # vehicle mass, lbm
-        'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
-        'coeff_static_friction':   1.0,  # coefficient of static friction
+        'vehicle_mass':            150,     # vehicle mass, lbm
+        'coeff_kinetic_friction':  0.8,     # coefficient of kinetic friction
+        'coeff_static_friction':   1.0,     # coefficient of static friction
 
-        'battery_voltage':         12.7,  # fully-charged open-circuit battery volts
+        'battery_voltage':         12.7,    # fully-charged open-circuit battery volts
 
-        'resistance_com':          0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':          0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
+        'resistance_com':          0.013,   # battery and circuit resistance from bat to PDB (incl main breaker), ohms
+        'resistance_one':          0.002,   # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
-        'time_step':               0.001,  # integration step size, seconds
-        'simulation_time':         100,  # integration duration, seconds
-        'max_dist':                30  # max distance to integrate to, feet
+        'time_step':               0.001,   # integration step size, seconds
+        'simulation_time':         100,     # integration duration, seconds
+        'max_dist':                30       # max distance to integrate to, feet
     }
 
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
@@ -59,7 +57,7 @@ class Model:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.config_backup = dict([(e, self.__dict__[e]) for e in Model.SAMPLE_CONFIG.keys()])
+        self.config_backup = dict([(e, self.__dict__[e]) for e in DrivetrainModel.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
         self._convert_units_to_si()
@@ -208,6 +206,6 @@ class Model:
 
     @staticmethod
     def from_json(data):
-        if all([k in data.keys() for k in Model.SAMPLE_CONFIG.keys()]) and len(data) == len(Model.SAMPLE_CONFIG):
-            return Model(**data)
+        if all([k in data.keys() for k in DrivetrainModel.SAMPLE_CONFIG.keys()]) and len(data) == len(DrivetrainModel.SAMPLE_CONFIG):
+            return DrivetrainModel(**data)
         return None
