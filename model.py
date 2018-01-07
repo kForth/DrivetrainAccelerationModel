@@ -215,7 +215,7 @@ class LinearModel:
                                           models[i].effective_diameter))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
-                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]
+                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types)) if i in self.plot]
         plt.legend(handles=handles)
 
         plt.show()
