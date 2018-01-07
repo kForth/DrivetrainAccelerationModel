@@ -20,19 +20,11 @@ if __name__ == "__main__":
         'motor_type':             '775pro',  # type of motor
         'num_motors':             2,  # number of motors
 
-        'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_gearbox_efficiency':   0.7,  # gearbox efficiency fraction
-
         'gear_ratio':             250,  # gear ratio
         'effective_diameter':     2,  # wheel diameter, inches
+
         'incline_angle':          90,  # movement angle in degrees relative to the ground
         'effective_mass':         550,  # vehicle mass, lbm
-
-        'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
-
-        'resistance_com':         0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':         0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
         'time_step':              time_step,  # integration step size, seconds
         'simulation_time':        max_time,  # integration duration, seconds

@@ -20,22 +20,15 @@ if __name__ == "__main__":
         'motor_type':             'MiniCIM',  # type of motor
         'num_motors':             6,  # number of motors
 
-        'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_gearbox_efficiency':   0.7,  # drivetrain efficiency fraction
-
         'gear_ratio':             12.75,  # gear ratio
         'effective_diameter':     6,  # wheel diameter, inches
+
         'incline_angle':          0,  # movement angle in degrees relative to the ground
         'effective_mass':           150,  # vehicle mass, lbm
+
         'check_for_slip':         True,  # check for wheel sleep
         'coeff_kinetic_friction': 0.8,  # coefficient of kinetic friction
         'coeff_static_friction':  1.0,  # coefficient of static friction
-
-        'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
-
-        'resistance_com':         0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':         0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
         'time_step':              time_step,  # integration step size, seconds
         'simulation_time':        max_time,  # integration duration, seconds

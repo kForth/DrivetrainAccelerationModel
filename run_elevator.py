@@ -4,26 +4,18 @@ if __name__ == "__main__":
     config = {
         'motor_type':              '775pro',  # type of motor
         'num_motors':              2,         # number of motors
-
-        'k_rolling_resistance_s':  10,        # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v':  0,         # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_gearbox_efficiency':    0.7,       # gearbox efficiency fraction
+        # 'motor_current_limit':     40,
 
         'gear_ratio':              165,       # gear ratio
-        'effective_diameter':      2,         # wheel diameter, inches
-        'incline_angle':           90,        # movement angle in degrees relative to the ground
-        'effective_mass':          550,       # vehicle mass, lbm
-        # 'motor_current_limit':     40,
-        'battery_voltage':         12.7,      # fully-charged open-circuit battery volts
+        'effective_diameter':      2,         # effective diameter, inches
 
-        'resistance_com':          0.013,     # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':          0.002,     # circuit resistance from PDB to motor (incl 40A breaker), ohms
+        'incline_angle':           90,        # incline angle relative to the ground, degrees
+        'effective_mass':          550,       # effective mass, lbm
 
-        'time_step':               0.001,     # integration step size, seconds
-        'simulation_time':         100,       # integration duration, seconds
+        'simulation_time':         30,       # integration duration, seconds
         'max_dist':                2,       # max distance to integrate to, feet
 
-        'plot':                    [0, 1, 3]          # plot pos, vel, current/10
+        'elements_to_plot':                    [0, 1, 3]          # plot pos, vel, current/10
     }
 
     model = LinearModel.from_json(config)

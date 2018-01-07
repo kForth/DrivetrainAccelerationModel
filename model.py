@@ -13,11 +13,11 @@ class LinearModel:
 
         'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
         'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_gearbox_efficiency':   0.7,  # drivetrain efficiency fraction
+        'k_gearbox_efficiency':   0.7,  # gearbox efficiency fraction
 
         'gear_ratio':             12.75,  # gear ratio
         'effective_diameter':     6,  # wheel radius, inches
-        'incline_angle':          0,  # movement angle in degrees relative to the ground
+        'incline_angle':          0,  # incline angle relative to the ground, degrees
         'effective_mass':         150,  # effective mass, lbm
 
         'check_for_slip':         False,  # flag if we should account of wheel slip in drivetrains
@@ -108,7 +108,7 @@ class LinearModel:
         elif available_force_at_wheel < self.effective_weight * self.coeff_kinetic_friction:
             self.is_slipping = False
 
-        if self.is_slipping or not self.check_for_slip:
+        if self.is_slipping and self.check_for_slip:
             applied_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
         else:
             applied_force_at_wheel = available_force_at_wheel
@@ -222,8 +222,7 @@ class LinearModel:
 
     @staticmethod
     def from_json(data):
-        if all([k in LinearModel.SAMPLE_CONFIG.keys() for k in data.keys()]):
-            temp = LinearModel.SAMPLE_CONFIG
-            temp.update(data)
-            return LinearModel(**temp)
-        return None
+        # if all([k in LinearModel.SAMPLE_CONFIG.keys() for k in data.keys()]):
+        temp = LinearModel.SAMPLE_CONFIG
+        temp.update(data)
+        return LinearModel(**temp)
