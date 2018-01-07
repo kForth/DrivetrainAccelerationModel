@@ -1,7 +1,6 @@
 from model import LinearModel
 
 if __name__ == "__main__":
-    save_csv = False
     plot = False
     save_xlsx = True
 
@@ -77,17 +76,6 @@ if __name__ == "__main__":
         time_to_dist_data.append(time_to_dist_row)
 
         distance_at_time += [[e['sim_distance'] for e in model.data_points]]
-
-    if save_csv:
-        with open('samples/optimize-time_to_dist.csv', 'w+') as file:
-            file.write(",".join([""] + [str(e * distance_step) for e in distance_steps]) + "\n")
-            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in time_to_dist_data[i]]) for i in
-                                  range(len(time_to_dist_data))]))
-
-        with open('samples/optimize-distance_at_time.csv', 'w+') as file:
-            file.write(",".join([""] + [str(e) for e in times]) + "\n")
-            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in distance_at_time[i]]) for i in
-                                  range(len(distance_at_time))]))
 
     if plot:
         import matplotlib.pyplot as plt
