@@ -1,7 +1,5 @@
 from model import DrivetrainModel
 
-import better_exceptions
-
 if __name__ == "__main__":
     save_csv = False
     plot = False
@@ -19,9 +17,9 @@ if __name__ == "__main__":
     max_time = 10
     time_step = 0.001
 
-
     config = {
-        'motor_type':              'MiniCIM',  # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
+        'motor_type':              'MiniCIM',
+    # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
         'num_motors':              6,  # number of motors
 
         'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
@@ -30,7 +28,7 @@ if __name__ == "__main__":
 
         'gear_ratio':              12.75,  # gear ratio
         'wheel_diameter':          6,  # wheel diameter, inches
-
+        'movement_angle':          0,  # movement angle in degrees relative to the ground
         'vehicle_mass':            150,  # vehicle mass, lbm
         'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
         'coeff_static_friction':   1.0,  # coefficient of static friction
@@ -69,8 +67,8 @@ if __name__ == "__main__":
 
         time_to_dist_row = [int(0)] * len(distances)
         for point in model.data_points:
-            if round(point['sim_distance']*4)/4 in distances:
-                time_to_dist_row[distances.index(round(point['sim_distance']*4)/4)] = point['sim_time']
+            if round(point['sim_distance'] * 4) / 4 in distances:
+                time_to_dist_row[distances.index(round(point['sim_distance'] * 4) / 4)] = point['sim_time']
         time_to_dist_data.append(time_to_dist_row)
 
         distance_at_time += [[e['sim_distance'] for e in model.data_points]]
@@ -78,14 +76,15 @@ if __name__ == "__main__":
     if save_csv:
         with open('samples/optimize-time_to_dist.csv', 'w+') as file:
             file.write(",".join([""] + [str(e) for e in distances]) + "\n")
-            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in time_to_dist_data[i]]) for i in range(len(time_to_dist_data))]))
+            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in time_to_dist_data[i]]) for i in
+                                  range(len(time_to_dist_data))]))
 
         with open('samples/optimize-distance_at_time.csv', 'w+') as file:
             file.write(",".join([""] + [str(e) for e in times]) + "\n")
-            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in distance_at_time[i]]) for i in range(len(distance_at_time))]))
+            file.write('\n'.join([','.join([str(ratios[i])] + [str(e) for e in distance_at_time[i]]) for i in
+                                  range(len(distance_at_time))]))
 
     if plot:
-        from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
         import numpy as np
 
@@ -116,25 +115,25 @@ if __name__ == "__main__":
         worksheet.set_column(0, 0, 10)
         worksheet.set_column(1, len(distances) + 1, 5)
         top_header_format = workbook.add_format({
-            'align': 'center',
-            'valign': 'vcenter',
+            'align':     'center',
+            'valign':    'vcenter',
             'font_size': 28
         })
         side_header_format = workbook.add_format({
-            'align': 'center',
-            'valign': 'vcenter',
+            'align':     'center',
+            'valign':    'vcenter',
             'font_size': 28,
-            'rotation': 90
+            'rotation':  90
         })
         worksheet.merge_range(0, 0, 1, 1, "Time (s)", top_header_format)
         worksheet.merge_range(0, 2, 0, len(distances) + 1, "Distance (ft)", top_header_format)
         worksheet.merge_range(2, 0, len(ratios) + 1, 0, "Ratio (n:1)", side_header_format)
 
         for col in range(len(distances)):
-            worksheet.write(1, col+2, distances[col])
+            worksheet.write(1, col + 2, distances[col])
 
         for row in range(len(ratios)):
-            worksheet.write(row+2, 1, ratios[row])
+            worksheet.write(row + 2, 1, ratios[row])
 
         test_data = dict()
         test_data.update(model.to_json())
@@ -145,7 +144,7 @@ if __name__ == "__main__":
 
         for col in range(len(distances)):
             worksheet.conditional_format(2, col + 2, len(ratios) + 1, col + 2, {
-                'type': '3_color_scale',
+                'type':      '3_color_scale',
                 'min_color': '#00ee00',
                 'mid_color': '#ffffff',
                 'max_color': '#ee0000'

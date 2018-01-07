@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from math import pi
+from math import pi, sin, radians
 
 from matplotlib import lines, patches
 
@@ -15,9 +15,9 @@ class DrivetrainModel:
         'k_rolling_resistance_v':  0,       # rolling resistance tuning parameter, lbf/(ft/sec)
         'k_drivetrain_efficiency': 0.7,     # drivetrain efficiency fraction
 
-        'gear_ratio':              12.75,  # gear ratio
-        'wheel_diameter':          6,      # wheel radius, inches
-
+        'gear_ratio':              12.75,   # gear ratio
+        'wheel_diameter':          6,       # wheel radius, inches
+        'movement_angle':          0,       # movement angle in degrees relative to the ground
         'vehicle_mass':            150,     # vehicle mass, lbm
         'coeff_kinetic_friction':  0.8,     # coefficient of kinetic friction
         'coeff_static_friction':   1.0,     # coefficient of static friction
@@ -38,7 +38,7 @@ class DrivetrainModel:
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
                  gear_ratio, wheel_diameter, vehicle_mass, coeff_kinetic_friction, coeff_static_friction,
-                 battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist):
+                 battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist, movement_angle):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
@@ -48,6 +48,7 @@ class DrivetrainModel:
         self.gear_ratio = gear_ratio
         self.wheel_diameter = wheel_diameter
         self.wheel_radius = wheel_diameter * 0.5
+        self.movement_angle = movement_angle
         self.vehicle_mass = vehicle_mass
         self.coeff_kinetic_friction = coeff_kinetic_friction
         self.coeff_static_friction = coeff_static_friction
@@ -104,7 +105,8 @@ class DrivetrainModel:
                            self.sim_current_per_motor * self.resistance_one  # computed here for output
         rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * \
                                                            velocity  # rolling resistance force, in newtons
-        net_accel_force = applied_force_at_wheel - rolling_resistance  # net force available, in newtons
+        force_from_gravity = self.vehicle_weight * sin(radians(self.movement_angle))
+        net_accel_force = applied_force_at_wheel - rolling_resistance - force_from_gravity  # net force available, in newtons
         if net_accel_force < 0:
             net_accel_force = 0
         return net_accel_force / self.vehicle_mass
