@@ -35,7 +35,7 @@ class LinearModel:
         'simulation_time':        100,  # integration duration, seconds
         'max_dist':               30,  # max distance to integrate to, feet
 
-        'plot':                   [0, 1, 2]  # [pos, vel, accel, current, voltage, slip
+        'elements_to_plot':                   (0, 1, 2)  # elements to plot (pos, vel, accel, current)
     }
 
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
@@ -45,7 +45,7 @@ class LinearModel:
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_gearbox_efficiency,
                  gear_ratio, effective_diameter, effective_mass, check_for_slip, coeff_kinetic_friction, coeff_static_friction,
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
-                 incline_angle, plot, motor_current_limit):
+                 incline_angle, elements_to_plot, motor_current_limit):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
@@ -67,7 +67,7 @@ class LinearModel:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.plot = plot
+        self.elements_to_plot = elements_to_plot
         self.config_backup = dict([(e, self.__dict__[e]) for e in LinearModel.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
@@ -183,7 +183,7 @@ class LinearModel:
     def plot_data(self, ax, csv_lines, i=0):
         t = [e[0] for e in csv_lines[1:]]
         for j in range(len(self.line_types)):
-            if j not in self.plot:
+            if j not in self.elements_to_plot:
                 continue
             line = self.line_colours[i % len(self.line_colours)] + self.line_types[j]
             ax.plot(t, [e[j + 1] for e in csv_lines[1:]], line, label=self.csv_headers[j + 1])
@@ -212,7 +212,7 @@ class LinearModel:
                                           models[i].effective_diameter))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
-                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types)) if i in self.plot]
+                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types)) if i in self.elements_to_plot]
         plt.legend(handles=handles)
 
         plt.show()
