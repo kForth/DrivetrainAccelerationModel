@@ -34,7 +34,7 @@ class Model:
     }
 
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
-    line_colours = ['r', 'b', 'g', 'c', 'm', 'y', 'k']
+    line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     line_types = ['-', '--', '-.']
 
     def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
