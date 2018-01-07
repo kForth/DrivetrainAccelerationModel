@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from math import pi
 
 from matplotlib import lines
 from matplotlib import patches
@@ -41,7 +42,7 @@ class Model:
                  gear_ratio, wheel_diameter, vehicle_mass, coeff_kinetic_friction, coeff_static_friction,
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist):
         self.motor_type = motor_type
-        self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')]()
+        self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
         self.k_rolling_resistance_s = k_rolling_resistance_s
         self.k_rolling_resistance_v = k_rolling_resistance_v
@@ -63,18 +64,6 @@ class Model:
         # calculate Derived Constants
         self._convert_units_to_si()
 
-        self.torque_offset = (self.motor.stall_torque * self.battery_voltage * self.motor.free_speed) / \
-                             (self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current *
-                              self.resistance_one * self.motor.free_speed + self.motor.stall_current *
-                              self.num_motors * self.resistance_com * self.motor.free_speed)
-        self.torque_slope = (self.motor.stall_torque * self.motor.max_voltage) / \
-                            (self.motor.max_voltage * self.motor.free_speed + self.motor.stall_current *
-                             self.resistance_one * self.motor.free_speed + self.motor.stall_current *
-                             self.num_motors * self.resistance_com * self.motor.free_speed)
-        self.k_t = self.motor.stall_torque / self.motor.stall_current
-        self.force_to_amps = self.wheel_radius / (self.num_motors * self.k_drivetrain_efficiency *
-                                                  self.gear_ratio *
-                                                  self.k_t)  # vehicle total force to per-motor amps conversion
         self.vehicle_weight = self.vehicle_mass * 9.80665  # vehicle weight, Newtons
 
         self.is_slipping = False  # state variable, init to false
@@ -90,15 +79,19 @@ class Model:
 
     def _convert_units_to_si(self):
         self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
-        self.k_rolling_resistance_v *= 4.448222 * 3.28083  # convert lbf/(ft/s) to Newtons/(meter/sec)
+        self.k_rolling_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
         self.wheel_radius = self.wheel_radius * 2.54 / 100  # convert inches to meters
         self.vehicle_mass *= 0.4535924  # convert lbm to kg
 
-    def _calc_max_accel(self, wheel_speed):  # compute acceleration w/ slip
-        motor_speed = wheel_speed / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
-        max_torque_at_voltage = self.torque_offset - self.torque_slope * motor_speed  # available torque at motor @ V, in Newtons
+    def _calc_max_accel(self, velocity):  # compute acceleration w/ slip
+        motor_speed = velocity / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
+
+        self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motor.k_v)) / self.motor.k_r
+        max_torque_at_voltage = self.motor.k_t * self.sim_current_per_motor
+
         max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
-        available_force_at_wheel = max_torque_at_wheel / self.wheel_radius * self.num_motors  # available force at wheels
+        available_force_at_wheel = max_torque_at_wheel / self.wheel_radius  # available force at wheels
+
         if available_force_at_wheel > self.vehicle_weight * self.coeff_static_friction:
             self.is_slipping = True
         elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
@@ -108,12 +101,11 @@ class Model:
             applied_force_at_wheel = (self.vehicle_weight * self.coeff_kinetic_friction)
         else:
             applied_force_at_wheel = available_force_at_wheel
-        self.sim_current_per_motor = applied_force_at_wheel * self.force_to_amps  # computed here for output
-        self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * \
-                                                  self.resistance_com - self.sim_current_per_motor * \
-                                                  self.resistance_one  # computed here for output
+
+        self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
+                           self.sim_current_per_motor * self.resistance_one  # computed here for output
         rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * \
-                                                           wheel_speed  # rolling resistance force, in newtons
+                                                           velocity  # rolling resistance force, in newtons
         net_accel_force = applied_force_at_wheel - rolling_resistance  # net force available, in newtons
         if net_accel_force < 0:
             net_accel_force = 0
@@ -122,7 +114,7 @@ class Model:
     def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
         while self.sim_time < self.simulation_time + self.time_step and \
-                (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
+                (self.sim_distance * pi * 2 < self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self._calc_max_accel(v_temp)
             v_temp = self.sim_speed + (self.sim_acceleration + a_temp) / 2 * \
@@ -137,7 +129,7 @@ class Model:
     def _integrate_with_euler(self):  # numerical integration using Euler's Method
         self.sim_time = self.time_step
         while self.sim_time < self.simulation_time + self.time_step \
-                and (self.sim_distance * 3.28083 < self.max_dist or self.max_dist <= 0):
+                and (self.sim_distance * pi * 2 < self.max_dist or self.max_dist <= 0):
             self.sim_speed += self.sim_acceleration * self.time_step
             self.sim_distance += self.sim_speed * self.time_step
             self.sim_acceleration = self._calc_max_accel(self.sim_speed)
@@ -147,11 +139,12 @@ class Model:
     def _add_data_point(self):
         self.data_points.append(OrderedDict({
             'sim_time':          self.sim_time,
-            'sim_distance':      self.sim_distance * 3.28083,
-            'sim_speed':         self.sim_speed * 3.28083,
-            'sim_acceleration ': self.sim_acceleration * 3.28083,
-            'sim_current':       self.num_motors * self.sim_current_per_motor / 10,
-            'sim_voltage':       self.sim_voltage, 'is_slipping': self.is_slipping
+            'sim_distance':      self.sim_distance * pi * 2,
+            'sim_speed':         self.sim_speed * pi * 2,
+            'sim_acceleration ': self.sim_acceleration * pi * 2,
+            'sim_current':       self.sim_current_per_motor,
+            'sim_voltage':       self.sim_voltage,
+            'is_slipping':       self.is_slipping
         }))
         self.csv_lines.append(list(self.data_points[-1].values()))
 
