@@ -62,7 +62,6 @@ class ElevatorModel:
 
         self.vehicle_weight = self.vehicle_mass * 9.80665  # vehicle weight, Newtons
 
-        self.is_slipping = False  # state variable, init to false
         self.sim_voltage = 0  # Voltage at the motor
         self.sim_speed = 0  # vehicle speed, meters/sec
         self.sim_distance = 0  # vehicle distance traveled, meters
@@ -130,8 +129,7 @@ class ElevatorModel:
             'sim_speed':         self.sim_speed * pi * 2,
             'sim_acceleration ': self.sim_acceleration * pi * 2,
             'sim_current':       self.sim_current_per_motor,
-            'sim_voltage':       self.sim_voltage,
-            'is_slipping':       self.is_slipping
+            'sim_voltage':       self.sim_voltage
         }))
         self.csv_lines.append(list(self.data_points[-1].values()))
 
