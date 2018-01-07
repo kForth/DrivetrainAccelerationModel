@@ -9,7 +9,7 @@ if __name__ == "__main__":
         'k_rolling_resistance_v':  0,         # rolling resistance tuning parameter, lbf/(ft/sec)
         'k_gearbox_efficiency':    0.7,       # drivetrain efficiency fraction
 
-        'gear_ratio':              80,       # gear ratio
+        'gear_ratio':              250,       # gear ratio
         'pulley_diameter':         2,         # wheel diameter, inches
         'movement_angle':          90,        # movement angle in degrees relative to the ground
         'vehicle_mass':            550,       # vehicle mass, lbm
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     model.calc()
 
     config.update({
-        'gear_ratio': 150,
+        'gear_ratio': 300,
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
@@ -36,11 +36,11 @@ if __name__ == "__main__":
     model2.calc()
 
     config.update({
-        'gear_ratio': 250,
+        'gear_ratio': 200,
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
     model3 = ElevatorModel.from_json(config)
     model3.calc()
 
-    model.show_plot()#compare_models=[model2, model3])
+    model.show_plot(compare_models=[model2, model3])
