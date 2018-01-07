@@ -1,4 +1,4 @@
-from model.elevator import ElevatorModel
+from model import LinearModel
 
 if __name__ == "__main__":
     config = {
@@ -9,11 +9,11 @@ if __name__ == "__main__":
         'k_rolling_resistance_v':  0,         # rolling resistance tuning parameter, lbf/(ft/sec)
         'k_gearbox_efficiency':    0.7,       # drivetrain efficiency fraction
 
-        'gear_ratio':              250,       # gear ratio
-        'pulley_diameter':         2,         # wheel diameter, inches
-        'movement_angle':          90,        # movement angle in degrees relative to the ground
-        'vehicle_mass':            550,       # vehicle mass, lbm
-
+        'gear_ratio':              160,       # gear ratio
+        'effective_diameter':      2,         # wheel diameter, inches
+        'incline_angle':           90,        # movement angle in degrees relative to the ground
+        'effective_mass':          550,       # vehicle mass, lbm
+        'motor_current_limit':     40,
         'battery_voltage':         12.7,      # fully-charged open-circuit battery volts
 
         'resistance_com':          0.013,     # battery and circuit resistance from bat to PDB (incl main breaker), ohms
@@ -21,18 +21,20 @@ if __name__ == "__main__":
 
         'time_step':               0.001,     # integration step size, seconds
         'simulation_time':         100,       # integration duration, seconds
-        'max_dist':                1.5        # max distance to integrate to, feet
+        'max_dist':                1.5,       # max distance to integrate to, feet
+
+        'plot':                    [0, 1, 3]          # plot pos and vel
     }
 
-    model = ElevatorModel.from_json(config)
+    model = LinearModel.from_json(config)
     model.calc()
 
     config.update({
-        'gear_ratio': 300,
+        'gear_ratio': 175,
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model2 = ElevatorModel.from_json(config)
+    model2 = LinearModel.from_json(config)
     model2.calc()
 
     config.update({
@@ -40,7 +42,7 @@ if __name__ == "__main__":
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model3 = ElevatorModel.from_json(config)
+    model3 = LinearModel.from_json(config)
     model3.calc()
 
     model.show_plot(compare_models=[model2, model3])

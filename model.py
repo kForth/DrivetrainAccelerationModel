@@ -1,76 +1,86 @@
 from collections import OrderedDict
-from math import pi, sin, radians
+from math import pi, radians, sin
 
 from matplotlib import lines, patches
 
-from model.motors import MOTOR_LOOKUP
+from motors import MOTOR_LOOKUP
 
 
-class DrivetrainModel:
+class LinearModel:
     SAMPLE_CONFIG = {
-        'motor_type':              'CIM',   # type of motor
-        'num_motors':              4,       # number of motors
+        'motor_type':             'CIM',  # type of motor
+        'num_motors':             4,  # number of motors
 
-        'k_rolling_resistance_s':  10,      # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v':  0,       # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.7,     # drivetrain efficiency fraction
+        'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
+        'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_gearbox_efficiency':   0.7,  # drivetrain efficiency fraction
 
-        'gear_ratio':              12.75,   # gear ratio
-        'wheel_diameter':          6,       # wheel radius, inches
-        'movement_angle':          0,       # movement angle in degrees relative to the ground
-        'vehicle_mass':            150,     # vehicle mass, lbm
-        'coeff_kinetic_friction':  0.8,     # coefficient of kinetic friction
-        'coeff_static_friction':   1.0,     # coefficient of static friction
+        'gear_ratio':             12.75,  # gear ratio
+        'effective_diameter':     6,  # wheel radius, inches
+        'incline_angle':          0,  # movement angle in degrees relative to the ground
+        'effective_mass':         150,  # effective mass, lbm
 
-        'battery_voltage':         12.7,    # fully-charged open-circuit battery volts
+        'check_for_slip':         False,  # flag if we should account of wheel slip in drivetrains
+        'coeff_kinetic_friction': 0.8,  # coefficient of kinetic friction
+        'coeff_static_friction':  1.0,  # coefficient of static friction
 
-        'resistance_com':          0.013,   # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':          0.002,   # circuit resistance from PDB to motor (incl 40A breaker), ohms
+        'motor_current_limit':    1000,  # current limit per motor
 
-        'time_step':               0.001,   # integration step size, seconds
-        'simulation_time':         100,     # integration duration, seconds
-        'max_dist':                30       # max distance to integrate to, feet
+        'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
+
+        'resistance_com':         0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
+        'resistance_one':         0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
+
+        'time_step':              0.001,  # integration step size, seconds
+        'simulation_time':        100,  # integration duration, seconds
+        'max_dist':               30,  # max distance to integrate to, feet
+
+        'plot':                   [0, 1, 2]  # [pos, vel, accel, current, voltage, slip
     }
 
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
     line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-    line_types = ['-', '--', '-.']
+    line_types = ['-', '--', '-.', ':']
 
-    def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_drivetrain_efficiency,
-                 gear_ratio, wheel_diameter, vehicle_mass, coeff_kinetic_friction, coeff_static_friction,
-                 battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist, movement_angle):
+    def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_gearbox_efficiency,
+                 gear_ratio, effective_diameter, effective_mass, check_for_slip, coeff_kinetic_friction, coeff_static_friction,
+                 battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
+                 incline_angle, plot, motor_current_limit):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
         self.k_rolling_resistance_s = k_rolling_resistance_s
         self.k_rolling_resistance_v = k_rolling_resistance_v
-        self.k_drivetrain_efficiency = k_drivetrain_efficiency
+        self.k_gearbox_efficiency = k_gearbox_efficiency
         self.gear_ratio = gear_ratio
-        self.wheel_diameter = wheel_diameter
-        self.wheel_radius = wheel_diameter * 0.5
-        self.movement_angle = movement_angle
-        self.vehicle_mass = vehicle_mass
+        self.effective_diameter = effective_diameter
+        self.effective_radius = effective_diameter * 0.5
+        self.incline_angle = incline_angle
+        self.effective_mass = effective_mass
+        self.check_for_slip = check_for_slip
         self.coeff_kinetic_friction = coeff_kinetic_friction
         self.coeff_static_friction = coeff_static_friction
+        self.motor_current_limit = motor_current_limit
         self.battery_voltage = battery_voltage
         self.resistance_com = resistance_com
         self.resistance_one = resistance_one
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.config_backup = dict([(e, self.__dict__[e]) for e in DrivetrainModel.SAMPLE_CONFIG.keys()])
+        self.plot = plot
+        self.config_backup = dict([(e, self.__dict__[e]) for e in LinearModel.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
         self._convert_units_to_si()
 
-        self.vehicle_weight = self.vehicle_mass * 9.80665  # vehicle weight, Newtons
+        self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
         self.is_slipping = False  # state variable, init to false
-        self.sim_voltage = 0  # Voltage at the motor
-        self.sim_speed = 0  # vehicle speed, meters/sec
-        self.sim_distance = 0  # vehicle distance traveled, meters
         self.sim_time = 0  # elapsed time, seconds
-        self.sim_acceleration = 0  # vehicle acceleration, meters/sec/sec
+        self.sim_distance = 0  # distance traveled, meters
+        self.sim_speed = 0  # speed, meters/sec
+        self.sim_acceleration = 0  # acceleration, meters/sec/sec
+        self.sim_voltage = 0  # Voltage at the motor
         self.sim_current_per_motor = 0  # current per motor, amps
 
         self.csv_lines = []
@@ -79,25 +89,30 @@ class DrivetrainModel:
     def _convert_units_to_si(self):
         self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
         self.k_rolling_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
-        self.wheel_radius = self.wheel_radius * 2.54 / 100  # convert inches to meters
-        self.vehicle_mass *= 0.4535924  # convert lbm to kg
+        self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
+        self.effective_mass *= 0.4535924  # convert lbm to kg
 
     def _calc_max_accel(self, velocity):  # compute acceleration w/ slip
-        motor_speed = velocity / self.wheel_radius * self.gear_ratio  # motor speed associated with vehicle speed
+        motor_speed = velocity / self.effective_radius * self.gear_ratio  # motor speed associated with pulley speed
 
         self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motor.k_v)) / self.motor.k_r
+        if velocity > 0:
+            self.sim_current_per_motor = min(self.sim_current_per_motor, self.motor_current_limit)
         max_torque_at_voltage = self.motor.k_t * self.sim_current_per_motor
 
-        max_torque_at_wheel = self.k_drivetrain_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
-        available_force_at_wheel = max_torque_at_wheel / self.wheel_radius  # available force at wheels
+        max_torque_at_wheel = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
+        available_force_at_wheel = max_torque_at_wheel / self.effective_radius  # available force at wheels
 
-        if available_force_at_wheel > self.vehicle_weight * self.coeff_static_friction:
-            self.is_slipping = True
-        elif available_force_at_wheel < self.vehicle_weight * self.coeff_kinetic_friction:
-            self.is_slipping = False
+        if self.check_for_slip:
+            if available_force_at_wheel > self.effective_weight * self.coeff_static_friction:
+                self.is_slipping = True
+            elif available_force_at_wheel < self.effective_weight * self.coeff_kinetic_friction:
+                self.is_slipping = False
 
-        if self.is_slipping:
-            applied_force_at_wheel = (self.vehicle_weight * self.coeff_kinetic_friction)
+            if self.is_slipping:
+                applied_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
+            else:
+                applied_force_at_wheel = available_force_at_wheel
         else:
             applied_force_at_wheel = available_force_at_wheel
 
@@ -105,11 +120,11 @@ class DrivetrainModel:
                            self.sim_current_per_motor * self.resistance_one  # computed here for output
         rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * \
                                                            velocity  # rolling resistance force, in newtons
-        force_from_gravity = self.vehicle_weight * sin(radians(self.movement_angle))
+        force_from_gravity = self.effective_weight * sin(radians(self.incline_angle))
         net_accel_force = applied_force_at_wheel - rolling_resistance - force_from_gravity  # net force available, in newtons
         if net_accel_force < 0:
             net_accel_force = 0
-        return net_accel_force / self.vehicle_mass
+        return net_accel_force / self.effective_mass
 
     def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
@@ -142,7 +157,7 @@ class DrivetrainModel:
             'sim_distance':      self.sim_distance * pi * 2,
             'sim_speed':         self.sim_speed * pi * 2,
             'sim_acceleration ': self.sim_acceleration * pi * 2,
-            'sim_current':       self.sim_current_per_motor,
+            'sim_current':       self.sim_current_per_motor / 10,
             'sim_voltage':       self.sim_voltage,
             'is_slipping':       self.is_slipping
         }))
@@ -171,6 +186,8 @@ class DrivetrainModel:
     def plot_data(self, ax, csv_lines, i=0):
         t = [e[0] for e in csv_lines[1:]]
         for j in range(len(self.line_types)):
+            if j not in self.plot:
+                continue
             line = self.line_colours[i % len(self.line_colours)] + self.line_types[j]
             ax.plot(t, [e[j + 1] for e in csv_lines[1:]], line, label=self.csv_headers[j + 1])
 
@@ -195,7 +212,7 @@ class DrivetrainModel:
                                           str(models[i].num_motors),
                                           models[i].motor_type,
                                           models[i].gear_ratio,
-                                          models[i].wheel_diameter))
+                                          models[i].effective_diameter))
                     for i in range(len(models))]
         handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
                                  label=self.csv_headers[i + 1]) for i in range(len(self.line_types))]
@@ -208,6 +225,8 @@ class DrivetrainModel:
 
     @staticmethod
     def from_json(data):
-        if all([k in data.keys() for k in DrivetrainModel.SAMPLE_CONFIG.keys()]) and len(data) == len(DrivetrainModel.SAMPLE_CONFIG):
-            return DrivetrainModel(**data)
+        if all([k in LinearModel.SAMPLE_CONFIG.keys() for k in data.keys()]):
+            temp = LinearModel.SAMPLE_CONFIG
+            temp.update(data)
+            return LinearModel(**temp)
         return None

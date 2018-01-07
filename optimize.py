@@ -1,4 +1,4 @@
-from model import DrivetrainModel
+from model import LinearModel
 
 if __name__ == "__main__":
     save_csv = False
@@ -11,36 +11,36 @@ if __name__ == "__main__":
 
     min_distance = 0
     max_distance = 40
-    distance_step = 0.5
+    distance_step = 0.25
 
     min_time = 0
     max_time = 10
     time_step = 0.001
 
     config = {
-        'motor_type':              'MiniCIM',
-    # type of motor (CIM, MiniCIM, BAG, _775pro, AM_9015, AM_NeveRest, AM_RS775_125, BB_RS_775_18V, BB_RS_5)
-        'num_motors':              6,  # number of motors
+        'motor_type':             'MiniCIM',  # type of motor
+        'num_motors':             6,  # number of motors
 
-        'k_rolling_resistance_s':  10,  # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v':  0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.7,  # drivetrain efficiency fraction
+        'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
+        'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_gearbox_efficiency':   0.7,  # drivetrain efficiency fraction
 
-        'gear_ratio':              12.75,  # gear ratio
-        'wheel_diameter':          6,  # wheel diameter, inches
-        'movement_angle':          0,  # movement angle in degrees relative to the ground
-        'vehicle_mass':            150,  # vehicle mass, lbm
-        'coeff_kinetic_friction':  0.8,  # coefficient of kinetic friction
-        'coeff_static_friction':   1.0,  # coefficient of static friction
+        'gear_ratio':             12.75,  # gear ratio
+        'effective_diameter':     6,  # wheel diameter, inches
+        'incline_angle':          0,  # movement angle in degrees relative to the ground
+        'effective_mass':           150,  # vehicle mass, lbm
+        'check_for_slip':         True,  # check for wheel sleep
+        'coeff_kinetic_friction': 0.8,  # coefficient of kinetic friction
+        'coeff_static_friction':  1.0,  # coefficient of static friction
 
-        'battery_voltage':         12.7,  # fully-charged open-circuit battery volts
+        'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
 
-        'resistance_com':          0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':          0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
+        'resistance_com':         0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
+        'resistance_one':         0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
 
-        'time_step':               time_step,  # integration step size, seconds
-        'simulation_time':         max_time,  # integration duration, seconds
-        'max_dist':                max_distance  # max distance to integrate to, feet
+        'time_step':              time_step,  # integration step size, seconds
+        'simulation_time':        max_time,  # integration duration, seconds
+        'max_dist':               max_distance  # max distance to integrate to, feet
     }
 
     ratios = [min_ratio]
@@ -62,13 +62,14 @@ if __name__ == "__main__":
         config.update({
             'gear_ratio': ratio
         })
-        model = DrivetrainModel.from_json(config)
+        model = LinearModel.from_json(config)
         model.calc()
 
         time_to_dist_row = [int(0)] * len(distances)
         for point in model.data_points:
-            if round(point['sim_distance'] * 4) / 4 in distances:
-                time_to_dist_row[distances.index(round(point['sim_distance'] * 4) / 4)] = point['sim_time']
+            closest_index = round(point['sim_distance'] / distance_step) * distance_step
+            if closest_index in distances:
+                time_to_dist_row[distances.index(closest_index)] = point['sim_time']
         time_to_dist_data.append(time_to_dist_row)
 
         distance_at_time += [[e['sim_distance'] for e in model.data_points]]

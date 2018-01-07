@@ -1,4 +1,4 @@
-from model import DrivetrainModel
+from model import LinearModel
 
 if __name__ == "__main__":
     config = {
@@ -7,12 +7,13 @@ if __name__ == "__main__":
 
         'k_rolling_resistance_s':  10,      # rolling resistance tuning parameter, lbf
         'k_rolling_resistance_v':  0,       # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_drivetrain_efficiency': 0.7,     # drivetrain efficiency fraction
+        'k_gearbox_efficiency':    0.7,        # drivetrain efficiency fraction
 
         'gear_ratio':              12.75,    # gear ratio
-        'wheel_diameter':          6,        # wheel diameter, inches
-        'movement_angle':          0,        # movement angle in degrees relative to the ground
-        'vehicle_mass':            150,      # vehicle mass, lbm
+        'effective_diameter':          6,        # wheel diameter, inches
+        'incline_angle':          0,        # movement angle in degrees relative to the ground
+        'effective_mass':            150,      # vehicle mass, lbm
+        'check_for_slip':          True,     # check for wheel slip
         'coeff_kinetic_friction':  0.8,      # coefficient of kinetic friction
         'coeff_static_friction':   1.0,      # coefficient of static friction
 
@@ -26,7 +27,7 @@ if __name__ == "__main__":
         'max_dist':                30        # max distance to integrate to, feet
     }
 
-    model = DrivetrainModel.from_json(config)
+    model = LinearModel.from_json(config)
     model.calc()
 
     config.update({
@@ -34,7 +35,7 @@ if __name__ == "__main__":
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model2 = DrivetrainModel.from_json(config)
+    model2 = LinearModel.from_json(config)
     model2.calc()
 
     config.update({
@@ -42,7 +43,7 @@ if __name__ == "__main__":
         'max_dist': 0,
         'simulation_time': model.data_points[-1]['sim_time']
     })
-    model3 = DrivetrainModel.from_json(config)
+    model3 = LinearModel.from_json(config)
     model3.calc()
 
     model.show_plot(compare_models=[model2, model3])
