@@ -11,8 +11,8 @@ class LinearModel:
         'motor_type':             'CIM',  # type of motor
         'num_motors':             4,  # number of motors
 
-        'k_rolling_resistance_s': 10,  # rolling resistance tuning parameter, lbf
-        'k_rolling_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_resistance_s': 10,  # rolling resistance tuning parameter, lbf
+        'k_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
         'k_gearbox_efficiency':   0.7,  # gearbox efficiency fraction
 
         'gear_ratio':             12.75,  # gear ratio
@@ -42,15 +42,15 @@ class LinearModel:
     line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     line_types = ['-', '--', '-.', ':']
 
-    def __init__(self, motor_type, num_motors, k_rolling_resistance_s, k_rolling_resistance_v, k_gearbox_efficiency,
+    def __init__(self, motor_type, num_motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency,
                  gear_ratio, effective_diameter, effective_mass, check_for_slip, coeff_kinetic_friction, coeff_static_friction,
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
                  incline_angle, elements_to_plot, motor_current_limit):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
-        self.k_rolling_resistance_s = k_rolling_resistance_s
-        self.k_rolling_resistance_v = k_rolling_resistance_v
+        self.k_resistance_s = k_resistance_s
+        self.k_resistance_v = k_resistance_v
         self.k_gearbox_efficiency = k_gearbox_efficiency
         self.gear_ratio = gear_ratio
         self.effective_diameter = effective_diameter
@@ -99,8 +99,8 @@ class LinearModel:
         self.data_points = []
 
     def _convert_units_to_si(self):
-        self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
-        self.k_rolling_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
+        self.k_resistance_s *= 4.448222  # convert lbf to Newtons
+        self.k_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
         self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
         self.effective_mass *= 0.4535924  # convert lbm to kg
 
@@ -128,8 +128,7 @@ class LinearModel:
 
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
                            self.sim_current_per_motor * self.resistance_one  # compute battery drain
-        rolling_resistance = self.k_rolling_resistance_s + self.k_rolling_resistance_v * \
-                                                           velocity  # rolling resistance force, in newtons
+        rolling_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
         force_from_gravity = self.effective_weight * sin(radians(self.incline_angle))
         net_accel_force = applied_force_at_wheel - rolling_resistance - force_from_gravity  # net force available, in newtons
         if net_accel_force < 0:
