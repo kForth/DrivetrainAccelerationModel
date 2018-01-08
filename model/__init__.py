@@ -22,7 +22,7 @@ class Model:
         'coeff_kinetic_friction': 0.8,  # coefficient of kinetic friction
         'coeff_static_friction':  1.0,  # coefficient of static friction
 
-        'motor_current_limit':    1000,  # current limit per motor
+        'motor_current_limit':    None,  # current limit per motor
 
         'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
 
@@ -106,8 +106,8 @@ class Model:
         motor_speed = velocity / self.effective_radius * self.gear_ratio  # motor speed associated with pulley speed
 
         self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motor.k_v)) / self.motor.k_r
-        if velocity > 0:
-            self.sim_current_per_motor = min(self.sim_current_per_motor, self.motor_current_limit)
+        if velocity > 0 and self.motor_current_limit is not None:
+                self.sim_current_per_motor = min(self.sim_current_per_motor, self.motor_current_limit)
         max_torque_at_voltage = self.motor.k_t * self.sim_current_per_motor
 
         max_torque_at_wheel = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
