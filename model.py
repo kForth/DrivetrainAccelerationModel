@@ -86,6 +86,18 @@ class LinearModel:
         self.csv_lines = []
         self.data_points = []
 
+    def reset(self):
+        self.is_slipping = False  # state variable, init to false
+        self.sim_time = 0  # elapsed time, seconds
+        self.sim_distance = 0  # distance traveled, meters
+        self.sim_speed = 0  # speed, meters/sec
+        self.sim_acceleration = 0  # acceleration, meters/sec/sec
+        self.sim_voltage = 0  # Voltage at the motor
+        self.sim_current_per_motor = 0  # current per motor, amps
+
+        self.csv_lines = []
+        self.data_points = []
+
     def _convert_units_to_si(self):
         self.k_rolling_resistance_s *= 4.448222  # convert lbf to Newtons
         self.k_rolling_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
