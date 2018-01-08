@@ -80,6 +80,8 @@ class Model:
         self.sim_acceleration = 0  # acceleration, meters/sec/sec
         self.sim_voltage = 0  # Voltage at the motor
         self.sim_current_per_motor = 0  # current per motor, amps
+        self.sim_energy = 0  # power used, mAh
+        self.cumulative_energy = 0  # total power used mAh
 
         self.data_points = []
 
@@ -144,6 +146,10 @@ class Model:
             self.sim_acceleration = self._calc_max_accel(v_temp)  # update a
             self.sim_distance += (self.sim_speed + v_temp) / 2 * self.time_step  # update x trapezoidally
             self.sim_speed = v_temp  # update V
+
+            self.sim_energy = self.sim_current_per_motor * self.time_step * 1000 / 60 ** 2  # calc power usage in mAh
+            self.cumulative_energy += self.sim_energy
+
             self._add_data_point()
             self.sim_time += self.time_step
 
@@ -156,6 +162,8 @@ class Model:
             'sim_current':       self.sim_current_per_motor / 10,
             'sim_voltage':       self.sim_voltage,
             'is_slipping':       self.is_slipping
+            'energy':       self.sim_energy,
+            'total_energy': self.cumulative_energy,
         }))
 
     def get_data_points(self):
