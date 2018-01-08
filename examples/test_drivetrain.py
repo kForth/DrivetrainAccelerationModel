@@ -1,4 +1,5 @@
-from model import LinearModel
+from model import Model
+from model.util import plot_models, dump_model_csv
 
 if __name__ == "__main__":
 
@@ -22,14 +23,14 @@ if __name__ == "__main__":
         'elements_to_plot':       (0, 1, 2, 3)
     }
 
-    model = LinearModel.from_json(config)
+    model = Model.from_json(config)
     model.calc()
 
     config['motor_type'] = 'MiniCIM'
     config['max_dist'] = 0
     config['simulation_time'] = model.data_points[-1]['sim_time']
 
-    model2 = LinearModel.from_json(config)
+    model2 = Model.from_json(config)
     model2.calc()
 
-    model.show_plot(compare_models=[model2])
+    plot_models(model, model2)

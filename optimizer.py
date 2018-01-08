@@ -1,4 +1,4 @@
-from model import LinearModel
+from model import Model
 
 
 class Optimizer:
@@ -17,7 +17,7 @@ class Optimizer:
         self.max_time = max_time
         self.time_step = time_step
 
-        self.model = LinearModel.from_json(self.model_config)
+        self.model = Model.from_json(self.model_config)
 
         self.ratios = [min_ratio]
         while self.ratios[-1] <= max_ratio:

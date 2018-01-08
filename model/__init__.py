@@ -1,18 +1,16 @@
 from collections import OrderedDict
 from math import pi, radians, sin
 
-from matplotlib import lines, patches
-
-from motors import MOTOR_LOOKUP, Motor
+from model.motors import MOTOR_LOOKUP
 
 
-class LinearModel:
+class Model:
     SAMPLE_CONFIG = {
         'motor_type':             'CIM',  # type of motor
         'num_motors':             4,  # number of motors
 
-        'k_resistance_s': 10,  # rolling resistance tuning parameter, lbf
-        'k_resistance_v': 0,  # rolling resistance tuning parameter, lbf/(ft/sec)
+        'k_resistance_s':         10,  # rolling resistance tuning parameter, lbf
+        'k_resistance_v':         0,  # rolling resistance tuning parameter, lbf/(ft/sec)
         'k_gearbox_efficiency':   0.7,  # gearbox efficiency fraction
 
         'gear_ratio':             12.75,  # gear ratio
@@ -68,7 +66,7 @@ class LinearModel:
         self.simulation_time = simulation_time
         self.max_dist = max_dist
         self.elements_to_plot = elements_to_plot
-        self.config_backup = dict([(e, self.__dict__[e]) for e in LinearModel.SAMPLE_CONFIG.keys()])
+        self.config_backup = dict([(e, self.__dict__[e]) for e in Model.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
         self._convert_units_to_si()
@@ -83,7 +81,6 @@ class LinearModel:
         self.sim_voltage = 0  # Voltage at the motor
         self.sim_current_per_motor = 0  # current per motor, amps
 
-        self.csv_lines = []
         self.data_points = []
 
     def reset(self):
@@ -95,7 +92,6 @@ class LinearModel:
         self.sim_voltage = 0  # Voltage at the motor
         self.sim_current_per_motor = 0  # current per motor, amps
 
-        self.csv_lines = []
         self.data_points = []
 
     def _get_gravity_force(self):
@@ -161,64 +157,15 @@ class LinearModel:
             'sim_voltage':       self.sim_voltage,
             'is_slipping':       self.is_slipping
         }))
-        self.csv_lines.append(list(self.data_points[-1].values()))
+
+    def get_data_points(self):
+        return self.data_points
 
     def calc(self):
-        self.csv_lines.append(self.csv_headers +
-                              [e + "=" + str(self.config_backup[e]) for e in self.config_backup.keys()] +
-                              [e + "=" + str(self.motor.to_json()[e]) for e in self.motor.to_json()])
-
         self.sim_acceleration = self._calc_max_accel(self.sim_speed)  # compute accel at t=0
         self._add_data_point()  # output values at t=0
 
         self._integrate_with_heun()  # numerically integrate and output using Heun's method
-
-    def get_csv_str(self):
-        return "\n".join([",".join([str(format(e, '.5f') if isinstance(e, float) else e) for e in line])
-                          for line in self.csv_lines])
-
-    def print_csv(self):
-        print(self.get_csv_str())
-
-    def save_csv(self, filename):
-        open(filename, "w+").write(self.get_csv_str())
-
-    def plot_data(self, ax, csv_lines, i=0):
-        t = [e[0] for e in csv_lines[1:]]
-        for j in range(len(self.line_types)):
-            if j not in self.elements_to_plot:
-                continue
-            line = self.line_colours[i % len(self.line_colours)] + self.line_types[j]
-            ax.plot(t, [e[j + 1] for e in csv_lines[1:]], line, label=self.csv_headers[j + 1])
-
-    def show_plot(self, compare_models=[]):
-        import matplotlib.pyplot as plt
-
-        fig, ax = plt.subplots()
-
-        if not isinstance(compare_models, list):
-            compare_models = [compare_models]
-
-        ax.set(xlabel='time (s)', title='Drivetrain Acceleration Model')
-        ax.grid()
-
-        models = [self] + compare_models
-        for i in range(len(models)):
-            model = models[i]
-            self.plot_data(ax, model.csv_lines, i)
-        handles = []
-        handles += [patches.Patch(color=self.line_colours[i],
-                                  label='{0}x {1} @ {2}:1 - {3}in'.format(
-                                          str(models[i].num_motors),
-                                          models[i].motor_type,
-                                          models[i].gear_ratio,
-                                          models[i].effective_diameter))
-                    for i in range(len(models))]
-        handles += [lines.Line2D([], [], color='k', linestyle=self.line_types[i],
-                                 label=self.csv_headers[i + 1]) for i in range(len(self.line_types)) if i in self.elements_to_plot]
-        plt.legend(handles=handles)
-
-        plt.show()
 
     def to_json(self):
         return self.config_backup
@@ -226,6 +173,6 @@ class LinearModel:
     @staticmethod
     def from_json(data):
         # if all([k in LinearModel.SAMPLE_CONFIG.keys() for k in data.keys()]):
-        temp = LinearModel.SAMPLE_CONFIG
+        temp = Model.SAMPLE_CONFIG
         temp.update(data)
-        return LinearModel(**temp)
+        return Model(**temp)
