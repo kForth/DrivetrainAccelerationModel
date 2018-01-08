@@ -18,9 +18,7 @@ if __name__ == "__main__":
         'coeff_static_friction':  1.0,
 
         'simulation_time':        100,
-        'max_dist':               30,
-
-        'elements_to_plot':       (0, 1, 2, 3)
+        'max_dist':               30
     }
 
     model = Model.from_json(config)
@@ -28,9 +26,9 @@ if __name__ == "__main__":
 
     config['motor_type'] = 'MiniCIM'
     config['max_dist'] = 0
-    config['simulation_time'] = model.data_points[-1]['sim_time']
+    config['simulation_time'] = model.data_points[-1]['time']
 
     model2 = Model.from_json(config)
     model2.calc()
 
-    plot_models(model, model2)
+    plot_models(model, model2, elements=('sim_position', 'sim_velocity', 'sim_current'))

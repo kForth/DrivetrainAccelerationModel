@@ -32,18 +32,16 @@ class Model:
         'time_step':              0.001,  # integration step size, seconds
         'simulation_time':        100,  # integration duration, seconds
         'max_dist':               30,  # max distance to integrate to, feet
-
-        'elements_to_plot':                   (0, 1, 2)  # elements to plot (pos, vel, accel, current)
     }
 
-    csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage', 'slip']
-    line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-    line_types = ['-', '--', '-.', ':']
+    csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage',
+                   'energy', 'total_energy', 'slip']
 
     def __init__(self, motor_type, num_motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency,
-                 gear_ratio, effective_diameter, effective_mass, check_for_slip, coeff_kinetic_friction, coeff_static_friction,
+                 gear_ratio, effective_diameter, effective_mass, check_for_slip,
+                 coeff_kinetic_friction, coeff_static_friction,
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
-                 incline_angle, elements_to_plot, motor_current_limit):
+                 incline_angle, motor_current_limit):
         self.motor_type = motor_type
         self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
         self.num_motors = num_motors
@@ -65,7 +63,6 @@ class Model:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.elements_to_plot = elements_to_plot
         self.config_backup = dict([(e, self.__dict__[e]) for e in Model.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
@@ -130,7 +127,7 @@ class Model:
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
                            self.sim_current_per_motor * self.resistance_one  # compute battery drain
         rolling_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        net_accel_force = applied_force_at_wheel - rolling_resistance - self._get_gravity_force() # Net force, N
+        net_accel_force = applied_force_at_wheel - rolling_resistance - self._get_gravity_force()  # Net force, N
         if net_accel_force < 0:
             net_accel_force = 0
         return net_accel_force / self.effective_mass
@@ -155,15 +152,15 @@ class Model:
 
     def _add_data_point(self):
         self.data_points.append(OrderedDict({
-            'sim_time':          self.sim_time,
-            'sim_distance':      self.sim_distance * pi * 2,
-            'sim_speed':         self.sim_speed * pi * 2,
-            'sim_acceleration ': self.sim_acceleration * pi * 2,
-            'sim_current':       self.sim_current_per_motor / 10,
-            'sim_voltage':       self.sim_voltage,
-            'is_slipping':       self.is_slipping
+            'time':         self.sim_time,
+            'pos':          self.sim_distance * pi * 2,
+            'vel':          self.sim_speed * pi * 2,
+            'accel ':       self.sim_acceleration * pi * 2,
+            'current':      self.sim_current_per_motor / 10,
+            'voltage':      self.sim_voltage,
             'energy':       self.sim_energy,
             'total_energy': self.cumulative_energy,
+            'is_slipping':  self.is_slipping
         }))
 
     def get_data_points(self):
@@ -180,7 +177,6 @@ class Model:
 
     @staticmethod
     def from_json(data):
-        # if all([k in LinearModel.SAMPLE_CONFIG.keys() for k in data.keys()]):
         temp = Model.SAMPLE_CONFIG
         temp.update(data)
         return Model(**temp)

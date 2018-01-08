@@ -2,31 +2,35 @@ import matplotlib.pyplot as plt
 from matplotlib import lines, patches
 
 
-def plot_models(*models):
+def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
     fig, ax = plt.subplots()
+
+    line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    line_types = ['-', '--', '-.', ':']
+
+    num_lines = min(len(line_types), len(elements_to_plot))
 
     ax.set(xlabel='time (s)', title='Subsystem Acceleration Model')
     ax.grid()
     for i in range(len(models)):
         model = models[i]
-        t = [e[0] for e in [list(e.values()) for e in model.data_points][1:]]
-        for j in range(len(model.line_types)):
-            if j not in model.elements_to_plot:
-                continue
-            line = model.line_colours[i % len(model.line_colours)] + model.line_types[j]
-            ax.plot(t, [e[j + 1] for e in [list(e.values()) for e in model.data_points][1:]], line,
-                    label=model.csv_headers[j + 1])
+        t = [e['time'] for e in model.data_points[1:]]
+
+        for j in range(num_lines):
+            key = elements_to_plot[j]
+            line = line_colours[i % len(line_colours)] + line_types[j]
+            ax.plot(t, [e[key] for e in model.data_points[1:]], line, label=key)
 
     handles = []
-    handles += [patches.Patch(color=models[i].line_colours[i],
+    handles += [patches.Patch(color=line_colours[i],
                               label='{0}x {1} @ {2}:1 - {3}in'.format(
                                       str(models[i].num_motors),
                                       models[i].motor_type,
                                       models[i].gear_ratio,
                                       models[i].effective_diameter))
                 for i in range(len(models))]
-    handles += [lines.Line2D([], [], color='k', linestyle=models[0].line_types[i], label=models[0].csv_headers[i + 1])
-                for i in range(len(models[0].line_types)) if i in models[0].elements_to_plot]
+    handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=elements_to_plot[i])
+                for i in range(num_lines)]
     plt.legend(handles=handles)
 
     plt.show()
