@@ -115,12 +115,13 @@ class LinearModel:
         max_torque_at_wheel = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
         available_force_at_wheel = max_torque_at_wheel / self.effective_radius  # available force at wheels
 
-        if available_force_at_wheel > self.effective_weight * self.coeff_static_friction:
-            self.is_slipping = True
-        elif available_force_at_wheel < self.effective_weight * self.coeff_kinetic_friction:
-            self.is_slipping = False
+        if self.check_for_slip:
+            if available_force_at_wheel > self.effective_weight * self.coeff_static_friction:
+                self.is_slipping = True
+            elif available_force_at_wheel < self.effective_weight * self.coeff_kinetic_friction:
+                self.is_slipping = False
 
-        if self.is_slipping and self.check_for_slip:
+        if self.check_for_slip and self.is_slipping:
             applied_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
         else:
             applied_force_at_wheel = available_force_at_wheel
