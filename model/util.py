@@ -8,18 +8,33 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
     line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     line_types = ['-', '--', '-.', ':']
 
+    headers = {
+        'time':         'Time (s)',
+        'pos':          'Position (ft)',
+        'vel':          'Velocity (ft/s)',
+        'accel':        'Acceleration (ft/s/s)',
+        'current':      'Current (dA)',
+        'voltage':      'Voltage (V)',
+        'energy':       'Energy (mAh)',
+        'total_energy': 'Total Energy (mAh)',
+        'is_slipping':  'Is Slipping'
+    }
+
     num_lines = min(len(line_types), len(elements_to_plot))
 
     ax.set(xlabel='time (s)', title='Subsystem Acceleration Model')
     ax.grid()
     for i in range(len(models)):
         model = models[i]
-        t = [e['time'] for e in model.data_points[1:]]
+        t = [e['time'] for e in model.data_points]
 
         for j in range(num_lines):
             key = elements_to_plot[j]
+            print(key)
+            for pnt in model.data_points:
+                print(pnt.keys())
             line = line_colours[i % len(line_colours)] + line_types[j]
-            ax.plot(t, [e[key] for e in model.data_points[1:]], line, label=key)
+            ax.plot(t, [e[key] for e in model.data_points], line, label=key)
 
     handles = []
     handles += [patches.Patch(color=line_colours[i],
@@ -29,7 +44,7 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
                                       models[i].gear_ratio,
                                       models[i].effective_diameter))
                 for i in range(len(models))]
-    handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=elements_to_plot[i])
+    handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=headers[elements_to_plot[i]])
                 for i in range(num_lines)]
     plt.legend(handles=handles)
 
