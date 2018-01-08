@@ -1,14 +1,14 @@
 from model.generic import GenericModel
 
 
-class DrivetrainModel(GenericModel):
+class ElevatorModel(GenericModel):
     def __init__(self,
                  motor_type: str,
                  num_motors: int,
                  gear_ratio: float,
-                 wheel_diameter: float,
-                 robot_mass: float,
-                 incline_angle=0,
+                 pulley_diameter: float,
+                 payload_mass: float,
+                 incline_angle=90,
                  motor_current_limit=None,
                  k_gearbox_efficiency=0.7,
                  coeff_kinetic_friction=0.8,
@@ -23,6 +23,6 @@ class DrivetrainModel(GenericModel):
                  simulation_time=120.0):
 
         super().__init__(motor_type, num_motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency, gear_ratio,
-                         wheel_diameter, robot_mass, True, coeff_kinetic_friction, coeff_static_friction,
+                         pulley_diameter, payload_mass, True, coeff_kinetic_friction, coeff_static_friction,
                          battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
                          incline_angle, motor_current_limit)

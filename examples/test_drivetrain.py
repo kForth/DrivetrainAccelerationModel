@@ -1,4 +1,4 @@
-from model.drivetrain import DrivetrainModel
+from model import DrivetrainModel
 from model.util import plot_models
 
 if __name__ == "__main__":
