@@ -10,6 +10,7 @@ class ElevatorModel(GenericModel):
                  payload_mass: float,
                  incline_angle=90,
                  motor_current_limit=None,
+                 motor_voltage_limit=None,
                  k_gearbox_efficiency=0.7,
                  k_resistance_s=0,
                  k_resistance_v=0,
@@ -37,4 +38,5 @@ class ElevatorModel(GenericModel):
                          simulation_time=simulation_time,
                          max_dist=max_dist,
                          incline_angle=incline_angle,
-                         motor_current_limit=motor_current_limit)
+                         motor_current_limit=motor_current_limit,
+                         motor_voltage_limit=motor_voltage_limit)

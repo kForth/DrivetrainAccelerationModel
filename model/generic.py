@@ -7,8 +7,9 @@ class GenericModel:
                  motors,                        # Motor object
                  gear_ratio,                    # Gear ratio, driven/driving
                  motor_current_limit,           # Current limit per motor, A
-                 effective_diameter,            # Effective diameter, in
-                 effective_mass,                # Effective mass, lbs
+                 motor_voltage_limit,           # Voltage limit per motor, V
+                 effective_diameter,            # Effective diameter, m
+                 effective_mass,                # Effective mass, kg
                  k_gearbox_efficiency,          # Gearbox efficiency fraction
                  incline_angle,                 # Incline angle relative to ground, deg
                  check_for_slip,                # Check for slip or not
@@ -36,6 +37,7 @@ class GenericModel:
         self.coeff_kinetic_friction = coeff_kinetic_friction
         self.coeff_static_friction = coeff_static_friction
         self.motor_current_limit = motor_current_limit
+        self.motor_voltage_limit = motor_voltage_limit
         self.battery_voltage = battery_voltage
         self.resistance_com = resistance_com
         self.resistance_one = resistance_one
@@ -73,30 +75,40 @@ class GenericModel:
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
 
-    def _calc_max_accel(self, velocity):  # compute acceleration w/ slip
-        motor_speed = velocity / self.effective_radius * self.gear_ratio  # motor speed associated with pulley speed
+    def _calc_max_accel(self, velocity):
+        motor_speed = velocity / self.effective_radius * self.gear_ratio
 
-        self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        available_voltage = self.sim_voltage
+        if self.motor_voltage_limit:
+            available_voltage = min(self.sim_voltage, self.motor_voltage_limit)
+
+        self.sim_current_per_motor = (available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+
         if velocity > 0 and self.motor_current_limit is not None:
                 self.sim_current_per_motor = min(self.sim_current_per_motor, self.motor_current_limit)
+
         max_torque_at_voltage = self.motors.k_t * self.sim_current_per_motor
 
-        max_torque_at_wheel = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
-        available_force_at_wheel = max_torque_at_wheel / self.effective_radius  # available force at wheels
+        available_torque_at_axle = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio
+        available_force_at_axle = available_torque_at_axle / self.effective_radius
 
         if self.check_for_slip:
-            if available_force_at_wheel > self.effective_weight * self.coeff_static_friction:
+            if available_force_at_axle > self.effective_weight * self.coeff_static_friction:
                 self.is_slipping = True
-            elif available_force_at_wheel < self.effective_weight * self.coeff_kinetic_friction:
+                print('Slipping {0} > {1}'.format(round(available_force_at_axle, 2), round(self.effective_weight * self.coeff_static_friction, 2)))
+            elif available_force_at_axle < self.effective_weight * self.coeff_kinetic_friction:
                 self.is_slipping = False
+                print('Not Slipping {0} < {1}'.format(round(available_force_at_axle, 2), round(self.effective_weight * self.coeff_kinetic_friction, 2)))
 
-        if self.check_for_slip and self.is_slipping:
-            available_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
+            if self.is_slipping:
+                available_force_at_axle = (self.effective_weight * self.coeff_kinetic_friction)
 
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
                            self.sim_current_per_motor * self.resistance_one  # compute battery drain
-        rolling_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        net_accel_force = available_force_at_wheel - rolling_resistance - self._get_gravity_force()  # Net force, N
+
+        tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
+        net_accel_force = available_force_at_axle - tuned_resistance - self._get_gravity_force()  # Net force, N
+
         if net_accel_force < 0:
             net_accel_force = 0
         return net_accel_force / self.effective_mass
@@ -148,9 +160,3 @@ class GenericModel:
         return {
 
         }
-
-    @staticmethod
-    def from_json(data):
-        temp = GenericModel.SAMPLE_CONFIG
-        temp.update(data)
-        return GenericModel(**temp)

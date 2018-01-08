@@ -10,6 +10,7 @@ class DrivetrainModel(GenericModel):
                  robot_mass: float,
                  incline_angle=0,
                  motor_current_limit=None,
+                 motor_voltage_limit=None,
                  k_gearbox_efficiency=0.7,
                  coeff_kinetic_friction=0.8,
                  coeff_static_friction=1.0,
@@ -39,4 +40,5 @@ class DrivetrainModel(GenericModel):
                          simulation_time=simulation_time,
                          max_dist=max_dist,
                          incline_angle=incline_angle,
-                         motor_current_limit=motor_current_limit)
+                         motor_current_limit=motor_current_limit,
+                         motor_voltage_limit=motor_voltage_limit)
