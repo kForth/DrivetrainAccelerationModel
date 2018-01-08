@@ -3,7 +3,7 @@ from math import pi, radians, sin
 
 from matplotlib import lines, patches
 
-from motors import MOTOR_LOOKUP
+from motors import MOTOR_LOOKUP, Motor
 
 
 class LinearModel:
@@ -47,7 +47,10 @@ class LinearModel:
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
                  incline_angle, elements_to_plot, motor_current_limit):
         self.motor_type = motor_type
-        self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
+        if not isinstance(motor_type, Motor):
+            self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
+        else:
+            self.motor = motor_type(num_motors)
         self.num_motors = num_motors
         self.k_resistance_s = k_resistance_s
         self.k_resistance_v = k_resistance_v

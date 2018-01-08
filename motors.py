@@ -18,7 +18,7 @@ class Motor(object):
     def to_json(self):
         return {
             'max_voltage':   self.max_voltage,
-            'free_speed':    self.free_speed / (2 * 3.1415926536 / 60),
+            'free_speed':    self.free_speed / (2 * pi / 60),
             'stall_torque':  self.stall_torque,
             'stall_current': self.stall_current,
             'free_current': self.free_current
