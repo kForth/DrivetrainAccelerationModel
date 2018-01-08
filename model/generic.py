@@ -3,9 +3,6 @@ from math import pi, radians, sin
 
 
 class GenericModel:
-    csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage',
-                   'energy', 'total_energy', 'slip']
-
     def __init__(self,
                  motors,                        # Motor object
                  gear_ratio,                    # Gear ratio, driven/driving
@@ -33,7 +30,6 @@ class GenericModel:
         self.k_gearbox_efficiency = k_gearbox_efficiency
         self.gear_ratio = gear_ratio
         self.effective_diameter = effective_diameter
-        self.effective_radius = effective_diameter * 0.5
         self.incline_angle = incline_angle
         self.effective_mass = effective_mass
         self.check_for_slip = check_for_slip
@@ -48,12 +44,14 @@ class GenericModel:
         self.max_dist = max_dist
 
         # calculate Derived Constants
+        self.effective_radius = effective_diameter * 0.5
+        self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
+
+        # convert Imperial Units
         self.k_resistance_s *= 4.448222  # convert lbf to Newtons
         self.k_resistance_v *= 4.448222 * 3.28084  # convert lbf/(ft/s) to Newtons/(meter/sec)
         self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
         self.effective_mass *= 0.4535924  # convert lbm to kg
-
-        self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
         self.is_slipping = False  # state variable, init to false
         self.sim_time = 0  # elapsed time, seconds
