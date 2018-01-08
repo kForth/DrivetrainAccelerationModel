@@ -1,28 +1,8 @@
 from model import LinearModel
 
 if __name__ == "__main__":
-    drivetrain_config = {
-        'motor_type':             'CIM',
-        'num_motors':             4,
-        # 'motor_current_limit':    60,
 
-        'gear_ratio':             12.75,
-        'effective_diameter':     6,
-
-        'incline_angle':          0,
-        'effective_mass':         150,
-
-        'check_for_slip':         True,
-        'coeff_kinetic_friction': 0.8,
-        'coeff_static_friction':  1.0,
-
-        'simulation_time':        100,
-        'max_dist':               30,
-
-        'elements_to_plot':       (0, 1, 2, 3)
-    }
-
-    elevator_config = {
+    config = {
         'motor_type':         '775pro',  # type of motor
         'num_motors':         2,  # number of motors
         # 'motor_current_limit':     40,
@@ -39,22 +19,14 @@ if __name__ == "__main__":
         'elements_to_plot':   [0, 1, 3]  # plot pos, vel, current/10
     }
 
-    # config = elevator_config
-    config = drivetrain_config
-
     model = LinearModel.from_json(config)
     model.calc()
 
-    config['gear_ratio'] -= config['gear_ratio'] * 0.2
+    config['gear_ratio'] = 200
     config['max_dist'] = 0
     config['simulation_time'] = model.data_points[-1]['sim_time']
 
     model2 = LinearModel.from_json(config)
     model2.calc()
 
-    config['gear_ratio'] += config['gear_ratio'] * 0.4
-
-    model3 = LinearModel.from_json(config)
-    model3.calc()
-
-    model.show_plot(compare_models=[model2, model3])
+    model.show_plot(compare_models=[model2])
