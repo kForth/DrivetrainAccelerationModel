@@ -155,7 +155,7 @@ class Model:
             'time':         self.sim_time,
             'pos':          self.sim_distance * pi * 2,
             'vel':          self.sim_speed * pi * 2,
-            'accel ':       self.sim_acceleration * pi * 2,
+            'accel':       self.sim_acceleration * pi * 2,
             'current':      self.sim_current_per_motor / 10,
             'voltage':      self.sim_voltage,
             'energy':       self.sim_energy,
@@ -165,6 +165,9 @@ class Model:
 
     def get_data_points(self):
         return self.data_points
+
+    def get_final(self, key):
+        return self.data_points[-1][key]
 
     def calc(self):
         self.sim_acceleration = self._calc_max_accel(self.sim_speed)  # compute accel at t=0

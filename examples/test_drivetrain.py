@@ -1,34 +1,11 @@
-from model import Model
-from model.util import plot_models, dump_model_csv
+from model.drivetrain import DrivetrainModel
+from model.util import plot_models
 
 if __name__ == "__main__":
 
-    config = {
-        'motor_type':             'CIM',
-        'num_motors':             6,
+    model = DrivetrainModel(motor_type='CIM', num_motors=6, gear_ratio=12, robot_mass=150, wheel_diameter=6).calc()
 
-        'gear_ratio':             13,
-        'effective_diameter':     6,
+    model2 = DrivetrainModel(motor_type='MiniCIM', num_motors=6, gear_ratio=12, robot_mass=150, wheel_diameter=6,
+                             max_dist=0, simulation_time=model.get_final('time')).calc()
 
-        'incline_angle':          0,
-        'effective_mass':         150,
-
-        'check_for_slip':         True,
-        'coeff_kinetic_friction': 0.8,
-        'coeff_static_friction':  1.0,
-
-        'simulation_time':        100,
-        'max_dist':               30
-    }
-
-    model = Model.from_json(config)
-    model.calc()
-
-    config['motor_type'] = 'MiniCIM'
-    config['max_dist'] = 0
-    config['simulation_time'] = model.data_points[-1]['time']
-
-    model2 = Model.from_json(config)
-    model2.calc()
-
-    plot_models(model, model2, elements=('sim_position', 'sim_velocity', 'sim_current'))
+    plot_models(model, model2, elements_to_plot=('pos', 'vel', 'accel'))
