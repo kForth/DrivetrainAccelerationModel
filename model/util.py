@@ -37,7 +37,7 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
     handles += [patches.Patch(color=line_colours[i],
                               label='{0}x {1} @ {2}:1 - {3}in'.format(
                                       str(models[i].num_motors),
-                                      models[i].motor_type,
+                                      models[i].motors.__class__.__name__,
                                       models[i].gear_ratio,
                                       models[i].effective_diameter))
                 for i in range(len(models))]

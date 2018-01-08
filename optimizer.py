@@ -1,13 +1,10 @@
-from model import Model
-
-
 class Optimizer:
-    def __init__(self, model_config,
+    def __init__(self, model,
                  min_ratio=2, max_ratio=20, ratio_step=0.5,
                  min_distance=0, max_dist=40, distance_step=0.25,
                  min_time=0, max_time=10, time_step=0.001):
-        model_config.update({'max_dist': max_dist})
-        self.model_config = model_config
+        self.model = model
+        model.max_dist = max_dist
 
         self.min_distance = min_distance
         self.max_dist = max_dist
@@ -16,8 +13,6 @@ class Optimizer:
         self.min_time = min_time
         self.max_time = max_time
         self.time_step = time_step
-
-        self.model = Model.from_json(self.model_config)
 
         self.ratios = [min_ratio]
         while self.ratios[-1] <= max_ratio:
@@ -43,15 +38,15 @@ class Optimizer:
 
             time_to_dist_row = [int(0)] * len(self.distance_steps)
             for point in self.model.data_points:
-                dist_steps = point['sim_distance'] / self.distance_step
+                dist_steps = point['pos'] / self.distance_step
                 closest_index = round(dist_steps)
                 dist_step_diff = abs(dist_steps - closest_index)
                 if closest_index in self.distance_steps and dist_step_diff < distance_step_deltas[closest_index]:
                     distance_step_deltas[closest_index] = dist_step_diff
-                    time_to_dist_row[self.distance_steps.index(closest_index)] = point['sim_time']
+                    time_to_dist_row[self.distance_steps.index(closest_index)] = point['time']
             self.time_to_dist_data.append(time_to_dist_row)
 
-            self.distance_at_time += [[e['sim_distance'] for e in self.model.data_points]]
+            self.distance_at_time += [[e['pos'] for e in self.model.data_points]]
 
     def plot(self):
         import matplotlib.pyplot as plt
@@ -106,7 +101,7 @@ class Optimizer:
 
         test_data = dict()
         test_data.update(self.model.to_json())
-        test_data.update(self.model.motor.to_json())
+        test_data.update(self.model.motors.to_json())
         for i in range(len(self.model.to_json())):
             key = list(test_data.keys())[i]
             worksheet.write(0, len(self.distance_steps) + 2 + i, "{0}= {1}".format(key, test_data[key]))

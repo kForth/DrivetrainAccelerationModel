@@ -1,10 +1,10 @@
 from model.generic import GenericModel
+from model.motors import Motor
 
 
 class DrivetrainModel(GenericModel):
     def __init__(self,
-                 motor_type: str,
-                 num_motors: int,
+                 motors: Motor,
                  gear_ratio: float,
                  wheel_diameter: float,
                  robot_mass: float,
@@ -22,8 +22,7 @@ class DrivetrainModel(GenericModel):
                  time_step=0.001,
                  simulation_time=120.0):
 
-        super().__init__(motor_type=motor_type,
-                         num_motors=num_motors,
+        super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
                          k_resistance_v=k_resistance_v,
                          k_gearbox_efficiency=k_gearbox_efficiency,

@@ -1,8 +1,6 @@
 from collections import OrderedDict
 from math import pi, radians, sin
 
-from model.motors import MOTOR_LOOKUP
-
 
 class GenericModel:
     SAMPLE_CONFIG = {
@@ -37,14 +35,13 @@ class GenericModel:
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage',
                    'energy', 'total_energy', 'slip']
 
-    def __init__(self, motor_type, num_motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency,
+    def __init__(self, motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency,
                  gear_ratio, effective_diameter, effective_mass, check_for_slip,
                  coeff_kinetic_friction, coeff_static_friction,
                  battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
                  incline_angle, motor_current_limit):
-        self.motor_type = motor_type
-        self.motor = MOTOR_LOOKUP[motor_type.lower().replace(' ', '').replace('_', '')](num_motors)
-        self.num_motors = num_motors
+        self.motors = motors
+        self.num_motors = self.motors.num_motors
         self.k_resistance_s = k_resistance_s
         self.k_resistance_v = k_resistance_v
         self.k_gearbox_efficiency = k_gearbox_efficiency
@@ -63,7 +60,6 @@ class GenericModel:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
-        self.config_backup = dict([(e, self.__dict__[e]) for e in GenericModel.SAMPLE_CONFIG.keys()])
 
         # calculate Derived Constants
         self._convert_units_to_si()
@@ -105,10 +101,10 @@ class GenericModel:
     def _calc_max_accel(self, velocity):  # compute acceleration w/ slip
         motor_speed = velocity / self.effective_radius * self.gear_ratio  # motor speed associated with pulley speed
 
-        self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motor.k_v)) / self.motor.k_r
+        self.sim_current_per_motor = (self.sim_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
         if velocity > 0 and self.motor_current_limit is not None:
                 self.sim_current_per_motor = min(self.sim_current_per_motor, self.motor_current_limit)
-        max_torque_at_voltage = self.motor.k_t * self.sim_current_per_motor
+        max_torque_at_voltage = self.motors.k_t * self.sim_current_per_motor
 
         max_torque_at_wheel = self.k_gearbox_efficiency * max_torque_at_voltage * self.gear_ratio  # available torque at wheels
         available_force_at_wheel = max_torque_at_wheel / self.effective_radius  # available force at wheels
@@ -176,7 +172,9 @@ class GenericModel:
         self._integrate_with_heun()  # numerically integrate and output using Heun's method
 
     def to_json(self):
-        return self.config_backup
+        return {
+
+        }
 
     @staticmethod
     def from_json(data):
