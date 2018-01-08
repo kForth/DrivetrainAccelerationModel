@@ -149,17 +149,6 @@ class LinearModel:
             self._add_data_point()
             self.sim_time += self.time_step
 
-    # for reference only not used:
-    def _integrate_with_euler(self):  # numerical integration using Euler's Method
-        self.sim_time = self.time_step
-        while self.sim_time < self.simulation_time + self.time_step \
-                and (self.sim_distance * pi * 2 < self.max_dist or self.max_dist <= 0):
-            self.sim_speed += self.sim_acceleration * self.time_step
-            self.sim_distance += self.sim_speed * self.time_step
-            self.sim_acceleration = self._calc_max_accel(self.sim_speed)
-            self._add_data_point()
-            self.sim_time += self.time_step
-
     def _add_data_point(self):
         self.data_points.append(OrderedDict({
             'sim_time':          self.sim_time,
