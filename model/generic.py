@@ -97,14 +97,12 @@ class GenericModel:
                 self.is_slipping = False
 
         if self.check_for_slip and self.is_slipping:
-            applied_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
-        else:
-            applied_force_at_wheel = available_force_at_wheel
+            available_force_at_wheel = (self.effective_weight * self.coeff_kinetic_friction)
 
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
                            self.sim_current_per_motor * self.resistance_one  # compute battery drain
         rolling_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        net_accel_force = applied_force_at_wheel - rolling_resistance - self._get_gravity_force()  # Net force, N
+        net_accel_force = available_force_at_wheel - rolling_resistance - self._get_gravity_force()  # Net force, N
         if net_accel_force < 0:
             net_accel_force = 0
         return net_accel_force / self.effective_mass
