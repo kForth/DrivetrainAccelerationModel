@@ -98,6 +98,9 @@ class LinearModel:
         self.csv_lines = []
         self.data_points = []
 
+    def _get_gravity_force(self):
+        return self.effective_weight * sin(radians(self.incline_angle))
+
     def _convert_units_to_si(self):
         self.k_resistance_s *= 4.448222  # convert lbf to Newtons
         self.k_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
@@ -129,8 +132,7 @@ class LinearModel:
         self.sim_voltage = self.battery_voltage - self.num_motors * self.sim_current_per_motor * self.resistance_com - \
                            self.sim_current_per_motor * self.resistance_one  # compute battery drain
         rolling_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        force_from_gravity = self.effective_weight * sin(radians(self.incline_angle))
-        net_accel_force = applied_force_at_wheel - rolling_resistance - force_from_gravity  # net force available, in newtons
+        net_accel_force = applied_force_at_wheel - rolling_resistance - self._get_gravity_force() # Net force, N
         if net_accel_force < 0:
             net_accel_force = 0
         return net_accel_force / self.effective_mass
