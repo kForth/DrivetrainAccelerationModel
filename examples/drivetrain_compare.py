@@ -1,6 +1,5 @@
-from model import DrivetrainModel
+from model import DrivetrainModel, plot_models
 from model.motors import *
-from model.util import plot_models
 
 if __name__ == "__main__":
 

@@ -1,6 +1,5 @@
-from model import ElevatorModel
+from model import ElevatorModel, plot_models
 from model.motors import _775pro
-from model.util import plot_models
 
 if __name__ == "__main__":
 
