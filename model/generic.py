@@ -3,43 +3,29 @@ from math import pi, radians, sin
 
 
 class GenericModel:
-    SAMPLE_CONFIG = {
-        'motor_type':             'CIM',  # type of motor
-        'num_motors':             4,  # number of motors
-
-        'k_resistance_s':         10,  # rolling resistance tuning parameter, lbf
-        'k_resistance_v':         0,  # rolling resistance tuning parameter, lbf/(ft/sec)
-        'k_gearbox_efficiency':   0.7,  # gearbox efficiency fraction
-
-        'gear_ratio':             12.75,  # gear ratio
-        'effective_diameter':     6,  # wheel radius, inches
-        'incline_angle':          0,  # incline angle relative to the ground, degrees
-        'effective_mass':         150,  # effective mass, lbm
-
-        'check_for_slip':         False,  # flag if we should account of wheel slip in drivetrains
-        'coeff_kinetic_friction': 0.8,  # coefficient of kinetic friction
-        'coeff_static_friction':  1.0,  # coefficient of static friction
-
-        'motor_current_limit':    None,  # current limit per motor
-
-        'battery_voltage':        12.7,  # fully-charged open-circuit battery volts
-
-        'resistance_com':         0.013,  # battery and circuit resistance from bat to PDB (incl main breaker), ohms
-        'resistance_one':         0.002,  # circuit resistance from PDB to motor (incl 40A breaker), ohms
-
-        'time_step':              0.001,  # integration step size, seconds
-        'simulation_time':        100,  # integration duration, seconds
-        'max_dist':               30,  # max distance to integrate to, feet
-    }
-
     csv_headers = ['time(s)', 'dist(ft)', 'speed(ft/s)', 'accel(ft/s^2)', 'current(amps/10)', 'voltage',
                    'energy', 'total_energy', 'slip']
 
-    def __init__(self, motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency,
-                 gear_ratio, effective_diameter, effective_mass, check_for_slip,
-                 coeff_kinetic_friction, coeff_static_friction,
-                 battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
-                 incline_angle, motor_current_limit):
+    def __init__(self,
+                 motors,                        # Motor object
+                 gear_ratio,                    # Gear ratio, driven/driving
+                 motor_current_limit,           # Current limit per motor, A
+                 effective_diameter,            # Effective diameter, in
+                 effective_mass,                # Effective mass, lbs
+                 k_gearbox_efficiency,          # Gearbox efficiency fraction
+                 incline_angle,                 # Incline angle relative to ground, deg
+                 check_for_slip,                # Check for slip or not
+                 coeff_kinetic_friction,        # µk
+                 coeff_static_friction,         # µs
+                 k_resistance_s,                # static resistance, lbf
+                 k_resistance_v,                # viscous resistance, lbf/(ft/s)
+                 battery_voltage,               # Fully-charged open-circuit battery voltage
+                 resistance_com,                # Resistance from bat to PDB (incl main breaker, Ω
+                 resistance_one,                # Resistance from PDB to motor (incl PDB breaker), Ω
+                 time_step,                     # Integration step size, s
+                 simulation_time,               # Integration duration, s
+                 max_dist):                     # Max distance to integrate to, ft
+
         self.motors = motors
         self.num_motors = self.motors.num_motors
         self.k_resistance_s = k_resistance_s
@@ -62,7 +48,10 @@ class GenericModel:
         self.max_dist = max_dist
 
         # calculate Derived Constants
-        self._convert_units_to_si()
+        self.k_resistance_s *= 4.448222  # convert lbf to Newtons
+        self.k_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
+        self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
+        self.effective_mass *= 0.4535924  # convert lbm to kg
 
         self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
@@ -91,12 +80,6 @@ class GenericModel:
 
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
-
-    def _convert_units_to_si(self):
-        self.k_resistance_s *= 4.448222  # convert lbf to Newtons
-        self.k_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
-        self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
-        self.effective_mass *= 0.4535924  # convert lbm to kg
 
     def _calc_max_accel(self, velocity):  # compute acceleration w/ slip
         motor_speed = velocity / self.effective_radius * self.gear_ratio  # motor speed associated with pulley speed
@@ -149,9 +132,9 @@ class GenericModel:
     def _add_data_point(self):
         self.data_points.append(OrderedDict({
             'time':         self.sim_time,
-            'pos':          self.sim_distance * pi * 2,
-            'vel':          self.sim_speed * pi * 2,
-            'accel':       self.sim_acceleration * pi * 2,
+            'pos':          self.sim_distance * 3.28084,
+            'vel':          self.sim_speed * 3.28084,
+            'accel':        self.sim_acceleration * 3.28084,
             'current':      self.sim_current_per_motor / 10,
             'voltage':      self.sim_voltage,
             'energy':       self.sim_energy,
