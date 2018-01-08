@@ -30,9 +30,6 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
 
         for j in range(num_lines):
             key = elements_to_plot[j]
-            print(key)
-            for pnt in model.data_points:
-                print(pnt.keys())
             line = line_colours[i % len(line_colours)] + line_types[j]
             ax.plot(t, [e[key] for e in model.data_points], line, label=key)
 
