@@ -18,4 +18,4 @@ if __name__ == "__main__":
                    max_dist=2, distance_step=0.05,
                    model_config=elevator_config)
     op.run()
-    op.save_xlsx()
+    op.save_xlsx('/tmp/optimize_elevator.xlsx')

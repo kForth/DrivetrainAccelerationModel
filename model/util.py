@@ -32,7 +32,7 @@ def plot_models(*models):
     plt.show()
 
 
-def dump_model_csv(model, filename='output.csv'):
+def dump_model_csv(model, filename):
     data_points = model.get_data_points()
     headers = model.csv_headers + \
               [(e + "=" + str(model.to_json()[e])) for e in list(model.to_json().keys())] + \

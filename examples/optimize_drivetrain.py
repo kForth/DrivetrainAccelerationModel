@@ -20,4 +20,4 @@ if __name__ == "__main__":
                    max_dist=54, distance_step=1,
                    model_config=drivetrain_config)
     op.run()
-    op.save_xlsx(filename='../samples/optimize.xlsx')
+    op.save_xlsx('/tmp/optimize_drivetrain.xlsx')

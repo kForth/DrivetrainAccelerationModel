@@ -74,7 +74,7 @@ class Optimizer:
 
         plt.show()
 
-    def save_xlsx(self, filename='optimize.xlsx'):
+    def save_xlsx(self, filename):
         import xlsxwriter
 
         workbook = xlsxwriter.Workbook(filename)
@@ -95,7 +95,7 @@ class Optimizer:
             'rotation':  90
         })
         worksheet.merge_range(0, 0, 1, 1, "Time (s)", top_header_format)
-        worksheet.merge_range(0, 2, 0, len(self.distance_steps) + 1, "Distance (ft)", top_header_format)
+        worksheet.merge_range(0, 2, 0, len(self.distance_steps) + 1, "Distance", top_header_format)
         worksheet.merge_range(2, 0, len(self.ratios) + 1, 0, "Ratio (n:1)", side_header_format)
 
         for col in range(len(self.distance_steps)):
