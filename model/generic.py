@@ -49,7 +49,7 @@ class GenericModel:
 
         # calculate Derived Constants
         self.k_resistance_s *= 4.448222  # convert lbf to Newtons
-        self.k_resistance_v *= 4.448222 * pi * 2  # convert lbf/(ft/s) to Newtons/(meter/sec)
+        self.k_resistance_v *= 4.448222 * 3.28084  # convert lbf/(ft/s) to Newtons/(meter/sec)
         self.effective_radius = self.effective_radius * 2.54 / 100  # convert inches to meters
         self.effective_mass *= 0.4535924  # convert lbm to kg
 
@@ -114,7 +114,7 @@ class GenericModel:
     def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self.sim_time = self.time_step
         while self.sim_time < self.simulation_time + self.time_step and \
-                (self.sim_distance * pi * 2 < self.max_dist or self.max_dist <= 0):
+                (self.sim_distance * 3.28084 < self.max_dist or self.max_dist <= 0):
             v_temp = self.sim_speed + self.sim_acceleration * self.time_step  # kickstart with Euler step
             a_temp = self._calc_max_accel(v_temp)
             v_temp = self.sim_speed + (self.sim_acceleration + a_temp) / 2 * \
