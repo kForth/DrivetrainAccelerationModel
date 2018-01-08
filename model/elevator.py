@@ -16,7 +16,7 @@ class ElevatorModel(GenericModel):
                  battery_voltage=12.5,
                  resistance_com=0.013,
                  resistance_one=0.002,
-                 max_dist=50,
+                 max_dist=1,
                  time_step=0.001,
                  simulation_time=120.0):
 
