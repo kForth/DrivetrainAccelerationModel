@@ -22,7 +22,22 @@ class DrivetrainModel(GenericModel):
                  time_step=0.001,
                  simulation_time=120.0):
 
-        super().__init__(motor_type, num_motors, k_resistance_s, k_resistance_v, k_gearbox_efficiency, gear_ratio,
-                         wheel_diameter, robot_mass, True, coeff_kinetic_friction, coeff_static_friction,
-                         battery_voltage, resistance_com, resistance_one, time_step, simulation_time, max_dist,
-                         incline_angle, motor_current_limit)
+        super().__init__(motor_type=motor_type,
+                         num_motors=num_motors,
+                         k_resistance_s=k_resistance_s,
+                         k_resistance_v=k_resistance_v,
+                         k_gearbox_efficiency=k_gearbox_efficiency,
+                         gear_ratio=gear_ratio,
+                         effective_diameter=wheel_diameter,
+                         effective_mass=robot_mass,
+                         check_for_slip=True,
+                         coeff_kinetic_friction=coeff_kinetic_friction,
+                         coeff_static_friction=coeff_static_friction,
+                         battery_voltage=battery_voltage,
+                         resistance_com=resistance_com,
+                         resistance_one=resistance_one,
+                         time_step=time_step,
+                         simulation_time=simulation_time,
+                         max_dist=max_dist,
+                         incline_angle=incline_angle,
+                         motor_current_limit=motor_current_limit)
