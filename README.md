@@ -2,47 +2,11 @@
 
 This is a python derivation of Ether's model found [here](https://www.chiefdelphi.com/media/papers/2868) (2013-09-24_2231), however significant changes have been made.
 
-Subsystem simulation with loss of traction (wheel slip), motor voltage drop due circuit resistance, accel based on DC motor formulae, and torque-dependent, speed-dependent, and constant friction losses.
+Subsystem simulation with loss of traction (wheel slip), gravity, motor voltage drop due circuit resistance, accel based on DC motor formulae, and torque-dependent, speed-dependent, and constant friction losses.
 
 2nd-order numerical integration using Heun's Method.
 
 You can output the data as a CSV for easy use in excel or you can view it as a plot thru matplotlib.
-
-Right now you can test any Linear motion, like drivetrains, elevators, or conveyors.
-
-Here's the default config. I recommend creating the model by calling LinearModel.from_json with a dict of any updated values.
-```python
-{
-    "motor_type":             "CIM",      # Type of motor
-    "num_motors":             4,          # Number of motors
-
-    "k_rolling_resistance_s": 10,         # Rolling resistance tuning parameter, lbf
-    "k_rolling_resistance_v": 0,          # Rolling resistance tuning parameter, lbf/(ft/sec)
-    "k_gearbox_efficiency":   0.7,        # Gearbox efficiency fraction
-
-    "gear_ratio":             12.75,      # Gear Ratio, driven:driving
-    "effective_diameter":     6,          # Wheel radius, inches
-    "incline_angle":          0,          # Incline angle relative to the ground, degrees
-    "effective_mass":         150,        # effective mass, lbm
-
-    "check_for_slip":         True,       # Check for wheel slip in friction drives
-    "coeff_kinetic_friction": 0.8,        # Coefficient of kinetic friction
-    "coeff_static_friction":  1.0,        # Coefficient of static friction
-
-    "motor_current_limit":    100,        # Current limit per motor
-
-    "battery_voltage":        12.7,       # Fully-charged open-circuit battery volts
-
-    "resistance_com":         0.013,      # Battery and circuit resistance from bat to PDB (incl main breaker), ohms
-    "resistance_one":         0.002,      # Circuit resistance from PDB to motor (incl 40A breaker), ohms
-
-    "time_step":              0.001,      # Integration step size, seconds
-    "simulation_time":        100,        # Integration duration, seconds
-    "max_dist":               30,         # Max distance to integrate to, feet
-
-    "elements_to_plot":       [0, 1, 2]   # Elements to plot (pos, vel, accel, current/10)
-}
-```
 
 ### Sample Plot
 ![Sample Plot](https://raw.githubusercontent.com/kForth/DrivetrainAccelerationModel/master/samples/sample.png "Sample plot comparing 3 different gear ratios.")
