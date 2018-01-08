@@ -3,6 +3,7 @@ from matplotlib import lines, patches
 
 from model.drivetrain import DrivetrainModel
 from model.elevator import ElevatorModel
+from model.arm import ArmModel
 from model.generic import GenericModel
 
 
@@ -14,9 +15,9 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
 
     headers = {
         'time':         'Time (s)',
-        'pos':          'Position (ft)',
-        'vel':          'Velocity (ft/s)',
-        'accel':        'Acceleration (ft/s/s)',
+        'pos':          'Position (m)',
+        'vel':          'Velocity (m/s)',
+        'accel':        'Acceleration (m/s/s)',
         'current':      'Current (dA)',
         'voltage':      'Voltage (V)',
         'energy':       'Energy (mAh)',
@@ -35,15 +36,15 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
         for j in range(num_lines):
             key = elements_to_plot[j]
             line = line_colours[i % len(line_colours)] + line_types[j]
-            ax.plot(t, [e[key] for e in model.data_points], line, label=key)
+            ax.plot(t, [e[key] / (10 if key =='current' else 1) for e in model.data_points], line, label=key)
 
     handles = []
     handles += [patches.Patch(color=line_colours[i],
-                              label='{0}x {1} @ {2}:1 - {3}in'.format(
+                              label='{0}x{1} @ {2}:1 - {3}m'.format(
                                       str(models[i].num_motors),
                                       models[i].motors.__class__.__name__,
                                       models[i].gear_ratio,
-                                      models[i].effective_diameter))
+                                      round(models[i].effective_diameter, 2)))
                 for i in range(len(models))]
     handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=headers[elements_to_plot[i]])
                 for i in range(num_lines)]
