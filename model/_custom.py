@@ -8,12 +8,25 @@ class CustomModel:
         'pos':          'Position (m)',
         'vel':          'Velocity (m/s)',
         'accel':        'Acceleration (m/s/s)',
-        'current':      'Current (dA)',
+        'current':      'Current/10 (A)',
         'voltage':      'Voltage (V)',
-        'energy':       'Energy (mAh)',
-        'total_energy': 'Total Energy (mAh)',
+        'energy':       'Energy (µAh)',
+        'total_energy': 'Total Energy (µAh)',
         'slipping':     'Slipping',
         'gravity':      'Force of Gravity (N)'
+    }
+
+    PLOT_FACTORS = {
+        'time':         1,
+        'pos':          1,
+        'vel':          1,
+        'accel':        1,
+        'current':      10,
+        'voltage':      1,
+        'energy':       10,
+        'total_energy': 10,
+        'slipping':     1,
+        'gravity':      1,
     }
 
     def __init__(self,

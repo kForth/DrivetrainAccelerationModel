@@ -24,7 +24,7 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
         for j in range(num_lines):
             key = elements_to_plot[j]
             line = line_colours[i % len(line_colours)] + line_types[j]
-            ax.plot(t, [e[key] / (10 if key in ['current', 'gravity'] else 1) for e in model.data_points], line, label=key)
+            ax.plot(t, [(e[key] / model.PLOT_FACTORS[key]) for e in model.data_points], line, label=key)
 
     handles = []
     handles += [patches.Patch(color=line_colours[i],

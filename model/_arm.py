@@ -10,10 +10,10 @@ class ArmModel(CustomModel):
         'pos':          'Position (rad)',
         'vel':          'Velocity (rad/s)',
         'accel':        'Acceleration (rad/s/s)',
-        'current':      'Current (dA)',
+        'current':      'Current/10 (A)',
         'voltage':      'Voltage (V)',
-        'energy':       'Energy (mAh)',
-        'total_energy': 'Total Energy (mAh)',
+        'energy':       'Energy (µAh)',
+        'total_energy': 'Total Energy (µAh)',
         'slipping':     'Slipping',
         'gravity':      'Force of Gravity (N*m)'
     }
