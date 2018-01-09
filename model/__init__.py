@@ -3,6 +3,7 @@ from matplotlib import lines, patches
 
 from model._drivetrain import DrivetrainModel
 from model._elevator import ElevatorModel
+from model._arm import ArmModel
 from model._custom import CustomModel
 
 
