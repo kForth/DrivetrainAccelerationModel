@@ -10,8 +10,8 @@ class CustomModel:
         'accel':        'Acceleration (m/s/s)',
         'current':      'Current/10 (A)',
         'voltage':      'Voltage (V)',
-        'energy':       'Energy (µAh)',
-        'total_energy': 'Total Energy (µAh)',
+        'energy':       'Energy (nAh)',
+        'total_energy': 'Total Energy (nAh)',
         'slipping':     'Slipping',
         'gravity':      'Force of Gravity (N)'
     }
@@ -23,8 +23,8 @@ class CustomModel:
         'accel':        1,
         'current':      10,
         'voltage':      1,
-        'energy':       10,
-        'total_energy': 10,
+        'energy':       100,
+        'total_energy': 100,
         'slipping':     1,
         'gravity':      1,
     }
@@ -152,7 +152,7 @@ class CustomModel:
             self._position += (self._velocity + v_temp) / 2 * self.time_step  # update x trapezoidally
             self._velocity = v_temp  # update V
 
-            self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60 ** 2  # calc power usage in mAh
+            self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60  # calc power usage in mAh
             self._cumulative_energy += self._energy_per_motor * self.num_motors
 
             self._add_data_point()
@@ -168,7 +168,7 @@ class CustomModel:
             'voltage':      self._voltage,
             'energy':       self._energy_per_motor,
             'total_energy': self._cumulative_energy,
-            'slipping':     self._slipping,
+            'slipping':     1 if self._slipping else 0,
             'gravity':      self._get_gravity_force()
         }))
 
@@ -197,6 +197,25 @@ class CustomModel:
                (" <{}V".format(self.motor_voltage_limit) if self.motor_voltage_limit else "")
 
     def to_json(self):
-        return {
-
+        output = {
+            'k_resistance_s': self.k_resistance_s,
+            'k_resistance_v': self.k_resistance_v,
+            'k_gearbox_efficiency': self.k_gearbox_efficiency,
+            'gear_ratio': self.gear_ratio,
+            'effective_diameter': self.effective_diameter,
+            'incline_angle': self.incline_angle,
+            'effective_mass': self.effective_mass,
+            'check_for_slip': self.check_for_slip,
+            'coeff_kinetic_friction': self.coeff_kinetic_friction,
+            'coeff_static_friction': self.coeff_static_friction,
+            'motor_current_limit': self.motor_current_limit,
+            'motor_voltage_limit': self.motor_voltage_limit,
+            'battery_voltage': self.battery_voltage,
+            'resistance_com': self.resistance_com,
+            'resistance_one': self.resistance_one,
+            'time_step': self.time_step,
+            'simulation_time': self.simulation_time,
+            'max_dist': self.max_dist
         }
+        output.update([('motor_' + k, v) for k, v in self.motors.to_json().items()])
+        return output

@@ -41,9 +41,8 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
 
 def dump_model_csv(model, filename):
     data_points = model.get_data_points()
-    headers = list(model.get_data_points[0].keys()) + \
-              [(e + "=" + str(model.to_json()[e])) for e in list(model.to_json().keys())] + \
-              [(e + "=" + str(model.motor.to_json()[e])) for e in list(model.motor.to_json().keys())]
+    headers = list(model.get_data_points()[0].keys()) + \
+              [(e + "=" + str(model.to_json()[e])) for e in list(model.to_json().keys())]
 
     csv_lines = [list(e.values()) for e in data_points]
     csv_lines = [[str(format(e, '.5f') if isinstance(e, float) else e) for e in line] for line in csv_lines]

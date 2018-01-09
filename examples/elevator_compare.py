@@ -16,4 +16,4 @@ if __name__ == "__main__":
     model2.calc()
     model3.calc()
 
-    plot_models(model, model2, model3, elements_to_plot=('pos', 'vel', 'current'))
+    plot_models(model, model2, model3, elements_to_plot=('pos', 'vel'))
