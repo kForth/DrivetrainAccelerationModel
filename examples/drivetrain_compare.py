@@ -16,4 +16,4 @@ if __name__ == "__main__":
                              max_dist=0, simulation_time=model.get_final('time'))
     model3.calc()
 
-    plot_models(model, model2, model3, elements_to_plot=('pos', 'vel', 'accel', 'current'))
+    plot_models(model, model2, model3, elements_to_plot=('pos', 'vel', 'accel'))

@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 from matplotlib import lines, patches
 
-from model.drivetrain import DrivetrainModel
-from model.elevator import ElevatorModel
-from model.arm import ArmModel
-from model.generic import GenericModel
+from model._drivetrain import DrivetrainModel
+from model._elevator import ElevatorModel
+from model._custom import CustomModel
 
 
 def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
@@ -13,21 +12,9 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
     line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     line_types = ['-', '--', '-.', ':']
 
-    headers = {
-        'time':         'Time (s)',
-        'pos':          'Position (m)',
-        'vel':          'Velocity (m/s)',
-        'accel':        'Acceleration (m/s/s)',
-        'current':      'Current (dA)',
-        'voltage':      'Voltage (V)',
-        'energy':       'Energy (mAh)',
-        'total_energy': 'Total Energy (mAh)',
-        'is_slipping':  'Is Slipping'
-    }
-
     num_lines = min(len(line_types), len(elements_to_plot))
 
-    ax.set(xlabel='time (s)', title='Subsystem Acceleration Model')
+    ax.set(xlabel='time (s)', title='{} Acceleration Model'.format(models[0].get_type()))
     ax.grid()
     for i in range(len(models)):
         model = models[i]
@@ -36,18 +23,16 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
         for j in range(num_lines):
             key = elements_to_plot[j]
             line = line_colours[i % len(line_colours)] + line_types[j]
-            ax.plot(t, [e[key] / (10 if key =='current' else 1) for e in model.data_points], line, label=key)
+            ax.plot(t, [e[key] / (10 if key in ['current', 'gravity'] else 1) for e in model.data_points], line, label=key)
 
     handles = []
     handles += [patches.Patch(color=line_colours[i],
-                              label='{0}x{1} @ {2}:1 - {3}m'.format(
-                                      str(models[i].num_motors),
-                                      models[i].motors.__class__.__name__,
-                                      models[i].gear_ratio,
-                                      round(models[i].effective_diameter, 2)))
+                              label=models[i].to_str())
                 for i in range(len(models))]
-    handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=headers[elements_to_plot[i]])
-                for i in range(num_lines)]
+    headers = models[0].HEADERS
+    for i in range(num_lines):
+        label = headers[elements_to_plot[i]] if elements_to_plot[i] in headers else elements_to_plot[i]
+        handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=label)]
     plt.legend(handles=handles)
 
     plt.show()

@@ -1,8 +1,8 @@
-from model.generic import GenericModel
+from model._custom import CustomModel
 from model.motors import Motor
 
 
-class ElevatorModel(GenericModel):
+class ElevatorModel(CustomModel):
     def __init__(self,
                  motors: Motor,
                  gear_ratio: float,
