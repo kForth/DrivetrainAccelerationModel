@@ -124,12 +124,8 @@ class CustomModel:
         if self.check_for_slip:
             if available_force_at_axle > self.effective_weight * self.coeff_static_friction:
                 self._slipping = True
-                print('Slipping {0} > {1}'.format(round(available_force_at_axle, 2),
-                                                  round(self.effective_weight * self.coeff_static_friction, 2)))
             elif available_force_at_axle < self.effective_weight * self.coeff_kinetic_friction:
                 self._slipping = False
-                print('Not Slipping {0} < {1}'.format(round(available_force_at_axle, 2),
-                                                      round(self.effective_weight * self.coeff_kinetic_friction, 2)))
 
             if self._slipping:
                 available_force_at_axle = (self.effective_weight * self.coeff_kinetic_friction)
