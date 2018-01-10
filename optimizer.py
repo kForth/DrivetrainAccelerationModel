@@ -94,7 +94,7 @@ class Optimizer:
         worksheet.merge_range(2, 0, len(self.ratios) + 1, 0, "Ratio (n:1)", side_header_format)
 
         for col in range(len(self.distance_steps)):
-            worksheet.write(1, col + 2, self.distance_steps[col])
+            worksheet.write(1, col + 2, self.distance_steps[col] * self.distance_step)
 
         for row in range(len(self.ratios)):
             worksheet.write(row + 2, 1, self.ratios[row])
