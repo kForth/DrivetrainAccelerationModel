@@ -1,39 +1,50 @@
+import colorsys
+from random import randint
+
 import matplotlib.pyplot as plt
 from matplotlib import lines, patches
 
-from model._drivetrain import DrivetrainModel
-from model._elevator import ElevatorModel
 from model._arm import ArmModel
 from model._custom import CustomModel
+from model._drivetrain import DrivetrainModel
+from model._elevator import ElevatorModel
 
 
 def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
     fig, ax = plt.subplots()
 
-    line_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-    line_types = ['-', '--', '-.', ':']
+    line_types = [[100000, 1], [3, 1]]
 
-    num_lines = min(len(line_types), len(elements_to_plot))
+    line_colours = []
+    for i in range(len(models)):
+        hue = (i / (len(models)))
+        luminance = 0.5 + randint(0, 10)/100
+        saturation = 0.5 + randint(0, 10)/100
+
+        line_colours.append(colorsys.hls_to_rgb(hue, luminance, saturation))
+
+    for i in range(2, len(elements_to_plot)):
+        line_types += [line_types[-1] + [1, 1]]
 
     ax.set(xlabel='time (s)', title='{} Acceleration Model'.format(models[0].get_type()))
     ax.grid()
-    for i in range(len(models)):
+    for i in range(min(len(models), len(line_colours))):
         model = models[i]
         t = [e['time'] for e in model.data_points]
 
-        for j in range(num_lines):
+        for j in range(len(elements_to_plot)):
             key = elements_to_plot[j]
-            line = line_colours[i % len(line_colours)] + line_types[j]
-            ax.plot(t, [(e[key] / model.PLOT_FACTORS[key]) for e in model.data_points], line, label=key)
+            ax.plot(t, [(e[key] / model.PLOT_FACTORS[key]) for e in model.data_points], label=key,
+                    color=line_colours[i], dashes=line_types[j])
 
     handles = []
     handles += [patches.Patch(color=line_colours[i],
                               label=models[i].to_str())
-                for i in range(len(models))]
+                for i in range(min(len(models), len(line_colours)))]
     headers = models[0].HEADERS
-    for i in range(num_lines):
+    for i in range(len(elements_to_plot)):
         label = headers[elements_to_plot[i]] if elements_to_plot[i] in headers else elements_to_plot[i]
-        handles += [lines.Line2D([], [], color='k', linestyle=line_types[i], label=label)]
+        handles += [lines.Line2D([], [], color='k', dashes=line_types[i], label=label)]
     plt.legend(handles=handles)
 
     plt.show()
