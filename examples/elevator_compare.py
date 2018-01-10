@@ -19,6 +19,4 @@ if __name__ == "__main__":
 
     [model.calc() for model in models]
 
-    print(len(ratio_generator.get_ratios()))
-
-    # plot_models(*models, elements_to_plot=('pos', 'vel', 'current', 'voltage', 'total_energy'))
+    plot_models(*models, elements_to_plot=('pos', 'vel', 'current', 'voltage', 'total_energy'))
