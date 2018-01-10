@@ -5,19 +5,6 @@ from model.motors import Motor
 
 
 class ArmModel(CustomModel):
-    HEADERS = {
-        'time':         'Time (s)',
-        'pos':          'Position (rad)',
-        'vel':          'Velocity (rad/s)',
-        'accel':        'Acceleration (rad/s/s)',
-        'current':      'Current/10 (A)',
-        'voltage':      'Voltage (V)',
-        'energy':       'Energy (µAh)',
-        'total_energy': 'Total Energy (µAh)',
-        'slipping':     'Slipping',
-        'gravity':      'Force of Gravity (N*m)'
-    }
-
     def __init__(self,
                  motors: Motor,
                  gear_ratio: float,
@@ -54,6 +41,12 @@ class ArmModel(CustomModel):
                          incline_angle=0,
                          motor_current_limit=motor_current_limit,
                          motor_voltage_limit=motor_voltage_limit)
+
+        self.HEADERS.update({
+            'pos':          'Position (rad)',
+            'vel':          'Velocity (rad/s)',
+            'accel':        'Acceleration (rad/s/s)',
+        })
 
     def _get_gravity_force(self):
         return self.effective_weight * cos(self._position)
