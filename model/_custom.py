@@ -124,7 +124,7 @@ class CustomModel:
         self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
-            if sum(self._current_history)/len(self._current_history) > self.motor_current_limit:
+            if sum(self._current_history) / len(self._current_history) > self.motor_current_limit:
                 self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)
             else:
                 self._current_per_motor = min(self._current_per_motor, self.motor_peak_current_limit)
@@ -206,8 +206,8 @@ class CustomModel:
         return self.__class__.__name__[:-5]
 
     def get_info(self):
-        return "{0}x{1} @ {2}:1 - {3}m".format(self.motors.__class__.__name__, self.num_motors, self.gear_ratio,
-                                                round(self.effective_diameter, 2))
+        return "{0}x{1} @ {2}:1 - {3}m".format(self.motors.__class__.__name__, self.num_motors,
+                                               round(self.gear_ratio, 3), round(self.effective_diameter, 2))
 
     def to_str(self):
         return self.get_type() + " " + self.get_info() + \
@@ -216,24 +216,24 @@ class CustomModel:
 
     def to_json(self):
         output = {
-            'k_resistance_s': self.k_resistance_s,
-            'k_resistance_v': self.k_resistance_v,
-            'k_gearbox_efficiency': self.k_gearbox_efficiency,
-            'gear_ratio': self.gear_ratio,
-            'effective_diameter': self.effective_diameter,
-            'incline_angle': self.incline_angle,
-            'effective_mass': self.effective_mass,
-            'check_for_slip': self.check_for_slip,
+            'k_resistance_s':         self.k_resistance_s,
+            'k_resistance_v':         self.k_resistance_v,
+            'k_gearbox_efficiency':   self.k_gearbox_efficiency,
+            'gear_ratio':             self.gear_ratio,
+            'effective_diameter':     self.effective_diameter,
+            'incline_angle':          self.incline_angle,
+            'effective_mass':         self.effective_mass,
+            'check_for_slip':         self.check_for_slip,
             'coeff_kinetic_friction': self.coeff_kinetic_friction,
-            'coeff_static_friction': self.coeff_static_friction,
-            'motor_current_limit': self.motor_current_limit,
-            'motor_voltage_limit': self.motor_voltage_limit,
-            'battery_voltage': self.battery_voltage,
-            'resistance_com': self.resistance_com,
-            'resistance_one': self.resistance_one,
-            'time_step': self.time_step,
-            'simulation_time': self.simulation_time,
-            'max_dist': self.max_dist
+            'coeff_static_friction':  self.coeff_static_friction,
+            'motor_current_limit':    self.motor_current_limit,
+            'motor_voltage_limit':    self.motor_voltage_limit,
+            'battery_voltage':        self.battery_voltage,
+            'resistance_com':         self.resistance_com,
+            'resistance_one':         self.resistance_one,
+            'time_step':              self.time_step,
+            'simulation_time':        self.simulation_time,
+            'max_dist':               self.max_dist
         }
         output.update([('motor_' + k, v) for k, v in self.motors.to_json().items()])
         return output

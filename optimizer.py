@@ -1,3 +1,4 @@
+import itertools
 from collections import OrderedDict
 
 
@@ -155,31 +156,31 @@ class RatioGenerator:
 
     def _calc(self):
         gear_sets = []
+
         for first_stage_driving in self.input_gears:
             for first_stage_driven in self.gears:
-                first_stage_ratio = first_stage_driven / first_stage_driving
                 gear_sets.append({
                     'gears': [(first_stage_driving, first_stage_driven)],
-                    'value': first_stage_ratio
+                    'value': first_stage_driven / first_stage_driving
                 })
 
-        for num_stages in range(self.min_stages + 1, self.max_stages + 1):
-            for source_gear_set in list(gear_sets):
-                last_driven = source_gear_set['gears'][-1][-1]
-                for stage_driving in self.gears:
-                    if stage_driving == last_driven:
-                        continue
-                    for stage_driven in self.gears:
-                        if stage_driven == stage_driving:
-                            continue
-                        gear_set = [(stage_driving, stage_driven)]
-                        if num_stages > self.min_stages + 1 and all(
-                                [(source_gear_set['gears'][-1][::-1][i] == gear_set[i]) for i in range(len(gear_set))]):
-                            continue
-                        gear_sets.append({
-                            'gears': source_gear_set['gears'] + gear_set,
-                            'value': source_gear_set['value'] * (stage_driven / stage_driving)
-                        })
+                for num_stages in range(1, self.max_stages):
+                    for driven in itertools.combinations_with_replacement(self.gears, num_stages):
+                        for driving in itertools.combinations_with_replacement(self.gears, num_stages):
+                            driving_set = tuple([first_stage_driving] + list(driving))
+                            driven_set = tuple([first_stage_driven] + list(driven))
+                            gear_set = sorted(list(zip(driving_set, driven_set)), key=lambda x: (x[0], x[1]))
+                            if all([e not in driven_set for e in driving_set]) and \
+                                    all([e not in driving_set for e in driven_set]):
+                                ratio = 1
+                                for gear in driving_set:
+                                    ratio *= gear
+                                for gear in driven_set:
+                                    ratio /= gear
+                                gear_sets.append({
+                                    'gears': gear_set,
+                                    'value': ratio
+                                })
 
         self._ratios = {}
         for current_set in gear_sets:
@@ -204,7 +205,8 @@ class RatioGenerator:
         return OrderedDict(sorted(self._ratios.items(), key=lambda x: x[1]['value']))
 
     def get_ratio_list(self):
-        ratios = [e['value'] for e in self._ratios.values()]
+        ratios = [e['value'] for e in self._ratios.values()
+                  if any([self.min_stages <= len(g) >= self.max_stages for g in e['gears']])]
         max_ratio = self.max_ratio if self.max_ratio is not None else max(ratios)
         min_ratio = self.min_ratio if self.min_ratio is not None else min(ratios)
         return sorted([e for e in ratios if max_ratio >= e >= min_ratio])
