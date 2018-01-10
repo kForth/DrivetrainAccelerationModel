@@ -3,6 +3,8 @@ from math import radians, sin
 
 
 class CustomModel:
+    BROWNOUT_VOLTAGE = 7
+
     HEADERS = {
         'time':         'Time (s)',
         'pos':          'Position (m)',
@@ -13,6 +15,7 @@ class CustomModel:
         'energy':       'Energy (nAh)',
         'total_energy': 'Total Energy (nAh)',
         'slipping':     'Slipping',
+        'brownout':     'Brownout',
         'gravity':      'Force of Gravity (N)'
     }
 
@@ -26,6 +29,7 @@ class CustomModel:
         'energy':       100,
         'total_energy': 100,
         'slipping':     1,
+        'brownout':     1,
         'gravity':      1,
     }
 
@@ -78,7 +82,6 @@ class CustomModel:
         self.effective_radius = effective_diameter / 2
         self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
-        self._slipping = False  # state variable, init to false
         self._time = 0  # elapsed time, seconds
         self._position = initial_position  # distance traveled, meters
         self._velocity = initial_velocity  # speed, meters/sec
@@ -87,6 +90,12 @@ class CustomModel:
         self._current_per_motor = 0  # current per motor, amps
         self._energy_per_motor = 0  # power used, mAh
         self._cumulative_energy = 0  # total power used mAh
+        self._slipping = False
+        self._brownout = False
+
+        self._current_history_size = 20
+        self._current_history = [0 for _ in range(self._current_history_size)]
+        self.motor_peak_current_limit = 100
 
         self.data_points = []
 
@@ -112,9 +121,16 @@ class CustomModel:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
 
         self._current_per_motor = (available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
-            self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)
+            if sum(self._current_history)/len(self._current_history) > self.motor_current_limit:
+                self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)
+            else:
+                self._current_per_motor = min(self._current_per_motor, self.motor_peak_current_limit)
+
+        if len(self._current_history) > self._current_history_size:
+            self._current_history = self._current_history[-self._current_history_size:]
 
         max_torque_at_voltage = self.motors.k_t * self._current_per_motor
 
@@ -132,6 +148,7 @@ class CustomModel:
 
         self._voltage = self.battery_voltage - self.num_motors * self._current_per_motor * self.resistance_com - \
                         self._current_per_motor * self.resistance_one  # compute battery drain
+        self._brownout <= self._voltage < self.BROWNOUT_VOLTAGE
 
         tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
         net_accel_force = available_force_at_axle - tuned_resistance - self._get_gravity_force()  # Net force, N
@@ -169,6 +186,7 @@ class CustomModel:
             'energy':       self._energy_per_motor,
             'total_energy': self._cumulative_energy,
             'slipping':     1 if self._slipping else 0,
+            'brownout':     1 if self._brownout else 0,
             'gravity':      self._get_gravity_force()
         }))
 
