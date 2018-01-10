@@ -55,14 +55,15 @@ class Optimizer:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
 
-        X = np.array(self.distance_steps)
+        X = np.array([i * self.distance_step for i in self.distance_steps])
         Y = np.array(self.ratios)
-        X, Y = np.meshgrid(X, Y)
         Z = np.array(self.time_to_dist_data)
+        
+        X, Y = np.meshgrid(X, Y)
 
-        ax.set_xlabel('Distance (ft)')
+        ax.set_xlabel(self.model.HEADERs['pos'])
         ax.set_ylabel('Ratio (n:1)')
-        ax.set_zlabel('Time to Dist (s)')
+        ax.set_zlabel(self.model.HEADERs['time'])
 
         surf = ax.plot_surface(X, Y, Z, cmap=plt.get_cmap('Greens'), linewidth=0, antialiased=False)
         fig.colorbar(surf, shrink=0.5, aspect=5)
@@ -89,8 +90,8 @@ class Optimizer:
             'font_size': 28,
             'rotation':  90
         })
-        worksheet.merge_range(0, 0, 1, 1, "Time (s)", top_header_format)
-        worksheet.merge_range(0, 2, 0, len(self.distance_steps) + 1, "Distance", top_header_format)
+        worksheet.merge_range(0, 0, 1, 1, self.model.HEADERS['time'], top_header_format)
+        worksheet.merge_range(0, 2, 0, len(self.distance_steps) + 1, self.model.HEADERS['pos'], top_header_format)
         worksheet.merge_range(2, 0, len(self.ratios) + 1, 0, "Ratio (n:1)", side_header_format)
 
         for col in range(len(self.distance_steps)):
