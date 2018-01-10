@@ -1,4 +1,4 @@
-from operator import itemgetter
+from collections import OrderedDict
 
 
 class Optimizer:
@@ -184,10 +184,9 @@ class RatioGenerator:
         self._ratios = {}
         for current_set in gear_sets:
             if current_set['value'] < 1:
-                key = "1:{}".format(round(1 / current_set['value'], 3))
-
+                key = "1:%.3f" % (1 / current_set['value'])
             else:
-                key = "{}:1".format(round(current_set['value'], 3))
+                key = "%.3f:1" % current_set['value']
 
             if key not in self._ratios.keys():
                 self._ratios[key] = {
@@ -202,7 +201,7 @@ class RatioGenerator:
                 self._ratios[key]['gears'].sort()
 
     def get_ratios(self):
-        return self._ratios
+        return OrderedDict(sorted(self._ratios.items(), key=lambda x: x[1]['value']))
 
     def get_ratio_list(self):
         ratios = [e['value'] for e in self._ratios.values()]

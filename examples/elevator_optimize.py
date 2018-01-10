@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # Climbing Elevator
     model = ElevatorModel(motors=_775pro(4), gear_ratio=120, payload_mass=160, pulley_diameter=2 * 0.0254)
 
-    ratio_generator = RatioGenerator(RatioGenerator.GEARS_32_DP, input_gears=(12,), max_stages=4, min_ratio=32, max_ratio=300)
+    ratio_generator = RatioGenerator(RatioGenerator.GEARS_32_DP, input_gears=(12,), max_stages=3, min_ratio=32, max_ratio=300)
 
     op = Optimizer(model=model, ratio_generator=ratio_generator,
                    max_dist=2 * 12 * 0.0254, distance_step=0.01 * 12 * 0.0254)
