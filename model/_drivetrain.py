@@ -10,6 +10,7 @@ class DrivetrainModel(CustomModel):
                  robot_mass: float,
                  incline_angle=0,
                  motor_current_limit=None,
+                 motor_peak_current_limit=150,
                  motor_voltage_limit=None,
                  k_gearbox_efficiency=0.7,
                  coeff_kinetic_friction=0.8,
@@ -41,4 +42,5 @@ class DrivetrainModel(CustomModel):
                          max_dist=max_dist,
                          incline_angle=incline_angle,
                          motor_current_limit=motor_current_limit,
+                         motor_peak_current_limit=motor_peak_current_limit,
                          motor_voltage_limit=motor_voltage_limit)

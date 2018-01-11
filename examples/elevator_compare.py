@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
     ratio_generator = RatioGenerator(RatioGenerator.GEARS_32_DP, input_gears=(12,),
                                      max_stages=3, min_ratio=60, max_ratio=100)
+    print(ratio_generator.get_ratio_list())
 
     models += [ElevatorModel(motors=_775pro(4), gear_ratio=r, payload_mass=160,
                              pulley_diameter=2 * 0.0254, max_dist=2 * 12 * 0.0254, battery_voltage=12)
@@ -19,4 +20,4 @@ if __name__ == "__main__":
 
     [model.calc() for model in models]
 
-    plot_models(*models, elements_to_plot=('pos', 'vel', 'current', 'voltage', 'total_energy'))
+    plot_models(*models, elements_to_plot=('pos', 'vel', 'current', 'voltage', 'accel'))

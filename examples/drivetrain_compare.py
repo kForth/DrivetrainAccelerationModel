@@ -1,18 +1,21 @@
-from model import DrivetrainModel, plot_models, dump_model_csv
-from model.motors import *
-from model.motors import _775pro
+from model import DrivetrainModel, plot_models
+from model.motors import _775pro, CIM
 
 if __name__ == "__main__":
+    models = []
 
-    model = DrivetrainModel(CIM(6), gear_ratio=13, robot_mass=68, wheel_diameter=6 * 0.0254)
+    models += [DrivetrainModel(_775pro(8), gear_ratio=26, robot_mass=68, wheel_diameter=6 * 0.0254,
+                               motor_voltage_limit=12, motor_current_limit=30, max_dist=3)]
 
-    model2 = DrivetrainModel(MiniCIM(6), gear_ratio=14, robot_mass=68, wheel_diameter=6 * 0.0254)
+    models += [DrivetrainModel(_775pro(8), gear_ratio=40, robot_mass=68, wheel_diameter=6 * 0.0254,
+                               motor_voltage_limit=10, motor_current_limit=40, max_dist=3)]
 
-    model3 = DrivetrainModel(_775pro(8), gear_ratio=36, robot_mass=68, wheel_diameter=6 * 0.0254,
-                             motor_voltage_limit=10, motor_current_limit=35)
+    models += [DrivetrainModel(_775pro(8), gear_ratio=50, robot_mass=68, wheel_diameter=6 * 0.0254,
+                               motor_voltage_limit=12, motor_current_limit=30, max_dist=3)]
 
-    model.calc()
-    model2.calc()
-    model3.calc()
+    models += [DrivetrainModel(CIM(6), gear_ratio=10, robot_mass=68, wheel_diameter=6 * 0.0254,
+                               motor_voltage_limit=12, max_dist=3)]
 
-    plot_models(model, model2, model3, elements_to_plot=('pos', 'vel', 'current'))
+    [model.calc() for model in models]
+
+    plot_models(*models, elements_to_plot=('pos', 'vel', 'total_current', 'current'))

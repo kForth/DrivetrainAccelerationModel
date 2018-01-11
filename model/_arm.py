@@ -11,6 +11,7 @@ class ArmModel(CustomModel):
                  arm_cg_distance: float,
                  arm_mass: float,
                  motor_current_limit=None,
+                 motor_peak_current_limit=None,
                  motor_voltage_limit=None,
                  k_gearbox_efficiency=0.7,
                  k_resistance_s=0,
@@ -40,6 +41,7 @@ class ArmModel(CustomModel):
                          max_dist=max_dist,
                          incline_angle=0,
                          motor_current_limit=motor_current_limit,
+                         motor_peak_current_limit=motor_peak_current_limit,
                          motor_voltage_limit=motor_voltage_limit)
 
         self.HEADERS.update({
@@ -51,10 +53,12 @@ class ArmModel(CustomModel):
     def _get_gravity_force(self):
         return self.effective_weight * cos(self._position)
 
-    def _calc_max_accel(self, velocity):
+    def _calc_max_accel(self, velocity, desired_voltage):
         motor_speed = velocity * self.gear_ratio
 
-        self._current_per_motor = (self._voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        applied_voltage = min(self._voltage, desired_voltage)
+
+        self._current_per_motor = (applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
 
         if velocity > 0 and self.motor_current_limit is not None:
             self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)

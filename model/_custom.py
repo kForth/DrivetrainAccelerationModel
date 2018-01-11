@@ -11,7 +11,7 @@ class CustomModel:
         'vel':           'Velocity (m/s)',
         'accel':         'Acceleration (m/s/s)',
         'current':       'Current/10 (A)',
-        'total_current': 'Total Current/10 (A)',
+        'total_current': 'Total Current/100 (A)',
         'voltage':       'Voltage (V)',
         'energy':        'Energy (nAh)',
         'total_energy':  'Total Energy (nAh)',
@@ -26,7 +26,7 @@ class CustomModel:
         'vel':           1,
         'accel':         1,
         'current':       10,
-        'total_current': 10,
+        'total_current': 100,
         'voltage':       1,
         'energy':        100,
         'total_energy':  100,
@@ -39,6 +39,7 @@ class CustomModel:
                  motors,  # Motor object
                  gear_ratio,  # Gear ratio, driven/driving
                  motor_current_limit,  # Current limit per motor, A
+                 motor_peak_current_limit,  # Peak Current limit per motor, A
                  motor_voltage_limit,  # Voltage limit per motor, V
                  effective_diameter,  # Effective diameter, m
                  effective_mass,  # Effective mass, kg
@@ -72,6 +73,7 @@ class CustomModel:
         self.coeff_kinetic_friction = coeff_kinetic_friction
         self.coeff_static_friction = coeff_static_friction
         self.motor_current_limit = motor_current_limit
+        self.motor_peak_current_limit = motor_peak_current_limit
         self.motor_voltage_limit = motor_voltage_limit
         self.battery_voltage = battery_voltage
         self.resistance_com = resistance_com
@@ -97,7 +99,6 @@ class CustomModel:
 
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
-        self.motor_peak_current_limit = 60
         self._was_current_limited = False
 
         self.data_points = []
@@ -116,25 +117,23 @@ class CustomModel:
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
 
-    def _calc_max_accel(self, velocity):
+    def _calc_max_accel(self, velocity, desired_voltage):
         motor_speed = velocity / self.effective_radius * self.gear_ratio
 
         available_voltage = self._voltage
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
+        applied_voltage = min(desired_voltage, available_voltage)
 
-        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
-        self._current_history.append(self._current_per_motor)
+        self._current_per_motor = (applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
 
         if velocity > 0 and self.motor_current_limit is not None:
-            if sum(self._current_history) / len(self._current_history) > self.motor_current_limit or self._was_current_limited:
+            if (sum(self._current_history) / len(self._current_history)) \
+                    > self.motor_current_limit or self._was_current_limited:
                 self._was_current_limited = True
                 self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)
-            else:
-                self._current_per_motor = min(self._current_per_motor, self.motor_peak_current_limit)
-
-        if len(self._current_history) > self._current_history_size:
-            self._current_history = self._current_history[-self._current_history_size:]
+        if self.motor_peak_current_limit is not None:
+            self._current_per_motor = min(self._current_per_motor, self.motor_peak_current_limit)
 
         max_torque_at_voltage = self.motors.k_t * self._current_per_motor
 
@@ -153,31 +152,33 @@ class CustomModel:
         self._voltage = self.battery_voltage - \
                         (self.num_motors * self._current_per_motor * self.resistance_com) - \
                         (self._current_per_motor * self.resistance_one)  # compute battery drain
-        self._voltage = self._voltage
 
         self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
         tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        net_accel_force = available_force_at_axle - tuned_resistance - self._get_gravity_force()  # Net force, N
+        net_accel_force = available_force_at_axle - max(0, tuned_resistance) - self._get_gravity_force()  # Net force, N
 
-        if net_accel_force < 0:
+        if net_accel_force < 0 and self._position <= 0:
             net_accel_force = 0
         return net_accel_force / self.effective_mass
 
     def _integrate_with_heun(self):  # numerical integration using Heun's Method
         self._time = self.time_step
         while self._time < self.simulation_time + self.time_step and \
-                (self._position < self.max_dist or self.max_dist <= 0):
+                (self._position < self.max_dist or not self.max_dist):
             v_temp = self._velocity + self._acceleration * self.time_step  # kickstart with Euler step
-            a_temp = self._calc_max_accel(v_temp)
+            a_temp = self._calc_max_accel(v_temp, self._voltage)
             v_temp = self._velocity + (self._acceleration + a_temp) / 2 * \
                                       self.time_step  # recalc v_temp trapezoidally
-            self._acceleration = self._calc_max_accel(v_temp)  # update a
             self._position += (self._velocity + v_temp) / 2 * self.time_step  # update x trapezoidally
             self._velocity = v_temp  # update V
+            self._acceleration = self._calc_max_accel(v_temp, self._voltage)  # update a
 
             self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60  # calc power usage in mAh
             self._cumulative_energy += self._energy_per_motor * self.num_motors
+            self._current_history.append(self._current_per_motor)
+            if len(self._current_history) > self._current_history_size:
+                self._current_history = self._current_history[-self._current_history_size:]
 
             self._add_data_point()
             self._time += self.time_step
@@ -205,9 +206,10 @@ class CustomModel:
         return self.data_points[-1][key]
 
     def calc(self):
-        self._acceleration = self._calc_max_accel(self._velocity)  # compute accel at t=0
+        self._acceleration = self._calc_max_accel(self._velocity, self._voltage)  # compute accel at t=0
         self._add_data_point()  # output values at t=0
 
+        # self._integrate_with_euler()
         self._integrate_with_heun()  # numerically integrate and output using Heun's method
 
     def get_type(self):
