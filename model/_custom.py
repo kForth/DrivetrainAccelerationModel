@@ -6,31 +6,33 @@ class CustomModel:
     BROWNOUT_VOLTAGE = 7
 
     HEADERS = {
-        'time':         'Time (s)',
-        'pos':          'Position (m)',
-        'vel':          'Velocity (m/s)',
-        'accel':        'Acceleration (m/s/s)',
-        'current':      'Current/10 (A)',
-        'voltage':      'Voltage (V)',
-        'energy':       'Energy (nAh)',
-        'total_energy': 'Total Energy (nAh)',
-        'slipping':     'Slipping',
-        'brownout':     'Brownout',
-        'gravity':      'Force of Gravity (N)'
+        'time':          'Time (s)',
+        'pos':           'Position (m)',
+        'vel':           'Velocity (m/s)',
+        'accel':         'Acceleration (m/s/s)',
+        'current':       'Current/10 (A)',
+        'total_current': 'Total Current/10 (A)',
+        'voltage':       'Voltage (V)',
+        'energy':        'Energy (nAh)',
+        'total_energy':  'Total Energy (nAh)',
+        'slipping':      'Slipping',
+        'brownout':      'Brownout',
+        'gravity':       'Force of Gravity (N)'
     }
 
     PLOT_FACTORS = {
-        'time':         1,
-        'pos':          1,
-        'vel':          1,
-        'accel':        1,
-        'current':      10,
-        'voltage':      1,
-        'energy':       100,
-        'total_energy': 100,
-        'slipping':     1,
-        'brownout':     1,
-        'gravity':      1,
+        'time':          1,
+        'pos':           1,
+        'vel':           1,
+        'accel':         1,
+        'current':       10,
+        'total_current': 10,
+        'voltage':       1,
+        'energy':        100,
+        'total_energy':  100,
+        'slipping':      1,
+        'brownout':      1,
+        'gravity':       1,
     }
 
     def __init__(self,
@@ -95,7 +97,7 @@ class CustomModel:
 
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
-        self.motor_peak_current_limit = 100
+        self.motor_peak_current_limit = 60
 
         self.data_points = []
 
@@ -120,7 +122,9 @@ class CustomModel:
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
 
-        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v) / self.motors.k_r)
+        print(available_voltage)
+
+        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
         self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
@@ -146,8 +150,10 @@ class CustomModel:
             if self._slipping:
                 available_force_at_axle = (self.effective_weight * self.coeff_kinetic_friction)
 
-        self._voltage = self.battery_voltage - self.num_motors * self._current_per_motor * self.resistance_com - \
-                        self._current_per_motor * self.resistance_one  # compute battery drain
+        self._voltage = self.battery_voltage - \
+                        (self.num_motors * self._current_per_motor * self.resistance_com) - \
+                        (self._current_per_motor * self.resistance_one)  # compute battery drain
+
         self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
         tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
@@ -177,17 +183,18 @@ class CustomModel:
 
     def _add_data_point(self):
         self.data_points.append(OrderedDict({
-            'time':         self._time,
-            'pos':          self._position,
-            'vel':          self._velocity,
-            'accel':        self._acceleration,
-            'current':      self._current_per_motor,
-            'voltage':      self._voltage,
-            'energy':       self._energy_per_motor,
-            'total_energy': self._cumulative_energy,
-            'slipping':     1 if self._slipping else 0,
-            'brownout':     1 if self._brownout else 0,
-            'gravity':      self._get_gravity_force()
+            'time':          self._time,
+            'pos':           self._position,
+            'vel':           self._velocity,
+            'accel':         self._acceleration,
+            'current':       self._current_per_motor,
+            'total_current': self._current_per_motor * self.num_motors,
+            'voltage':       self._voltage,
+            'energy':        self._energy_per_motor,
+            'total_energy':  self._cumulative_energy,
+            'slipping':      1 if self._slipping else 0,
+            'brownout':      1 if self._brownout else 0,
+            'gravity':       self._get_gravity_force()
         }))
 
     def get_data_points(self):
