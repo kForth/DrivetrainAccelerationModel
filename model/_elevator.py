@@ -10,6 +10,7 @@ class ElevatorModel(CustomModel):
                  payload_mass: float,
                  incline_angle=90,
                  motor_current_limit=None,
+                 motor_peak_current_limit=None,
                  motor_voltage_limit=None,
                  k_gearbox_efficiency=0.7,
                  k_resistance_s=0,
@@ -39,4 +40,5 @@ class ElevatorModel(CustomModel):
                          max_dist=max_dist,
                          incline_angle=incline_angle,
                          motor_current_limit=motor_current_limit,
+                         motor_peak_current_limit=motor_peak_current_limit,
                          motor_voltage_limit=motor_voltage_limit)
