@@ -88,7 +88,7 @@ class CustomModel:
         self._position = initial_position  # distance traveled, meters
         self._velocity = initial_velocity  # speed, meters/sec
         self._acceleration = initial_acceleration  # acceleration, meters/sec/sec
-        self._voltage = 0  # Voltage at the motor
+        self._voltage = self.battery_voltage  # Voltage at the motor
         self._current_per_motor = 0  # current per motor, amps
         self._energy_per_motor = 0  # power used, mAh
         self._cumulative_energy = 0  # total power used mAh
@@ -98,6 +98,7 @@ class CustomModel:
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
         self.motor_peak_current_limit = 60
+        self._was_current_limited = False
 
         self.data_points = []
 
@@ -106,7 +107,7 @@ class CustomModel:
         self._position = 0  # distance traveled, meters
         self._velocity = 0  # speed, meters/sec
         self._acceleration = 0  # acceleration, meters/sec/sec
-        self._voltage = 0  # Voltage at the motor
+        self._voltage = self.battery_voltage  # Voltage at the motor
         self._current_per_motor = 0  # current per motor, amps
         self._slipping = False  # state variable, init to false
 
@@ -122,11 +123,12 @@ class CustomModel:
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
 
-        self._current_per_motor = available_voltage - (max(0, motor_speed) / self.motors.k_v) / self.motors.k_r
+        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
         self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
-            if sum(self._current_history) / len(self._current_history) > self.motor_current_limit:
+            if sum(self._current_history) / len(self._current_history) > self.motor_current_limit or self._was_current_limited:
+                self._was_current_limited = True
                 self._current_per_motor = min(self._current_per_motor, self.motor_current_limit)
             else:
                 self._current_per_motor = min(self._current_per_motor, self.motor_peak_current_limit)
@@ -151,6 +153,7 @@ class CustomModel:
         self._voltage = self.battery_voltage - \
                         (self.num_motors * self._current_per_motor * self.resistance_com) - \
                         (self._current_per_motor * self.resistance_one)  # compute battery drain
+        self._voltage = self._voltage
 
         self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
