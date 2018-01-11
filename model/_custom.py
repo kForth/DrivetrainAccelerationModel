@@ -120,7 +120,7 @@ class CustomModel:
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
 
-        self._current_per_motor = (available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v) / self.motors.k_r)
         self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
@@ -148,7 +148,7 @@ class CustomModel:
 
         self._voltage = self.battery_voltage - self.num_motors * self._current_per_motor * self.resistance_com - \
                         self._current_per_motor * self.resistance_one  # compute battery drain
-        self._brownout <= self._voltage < self.BROWNOUT_VOLTAGE
+        self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
         tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
         net_accel_force = available_force_at_axle - tuned_resistance - self._get_gravity_force()  # Net force, N
