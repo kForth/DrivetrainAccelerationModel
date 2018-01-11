@@ -122,9 +122,7 @@ class CustomModel:
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
 
-        print(available_voltage)
-
-        self._current_per_motor = max(0, available_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        self._current_per_motor = available_voltage - (max(0, motor_speed) / self.motors.k_v) / self.motors.k_r
         self._current_history.append(self._current_per_motor)
 
         if velocity > 0 and self.motor_current_limit is not None:
@@ -217,7 +215,7 @@ class CustomModel:
                                                round(self.gear_ratio, 3), round(self.effective_diameter, 2))
 
     def to_str(self):
-        return self.get_type() + " " + self.get_info() + \
+        return "." + self.get_info() + \
                (" <{}A".format(self.motor_current_limit) if self.motor_current_limit else "") + \
                (" <{}V".format(self.motor_voltage_limit) if self.motor_voltage_limit else "")
 
