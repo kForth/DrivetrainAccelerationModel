@@ -21,7 +21,10 @@ class ArmModel(CustomModel):
                  resistance_one=0.002,
                  max_dist=1,
                  time_step=0.001,
-                 simulation_time=120.0):
+                 simulation_time=120.0,
+                 initial_position=0,
+                 initial_velocity=0,
+                 initial_acceleration=0):
 
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
@@ -42,7 +45,10 @@ class ArmModel(CustomModel):
                          incline_angle=0,
                          motor_current_limit=motor_current_limit,
                          motor_peak_current_limit=motor_peak_current_limit,
-                         motor_voltage_limit=motor_voltage_limit)
+                         motor_voltage_limit=motor_voltage_limit,
+                         initial_position=initial_position,
+                         initial_velocity=initial_velocity,
+                         initial_acceleration=initial_acceleration)
 
         self.HEADERS.update({
             'pos':          'Position (rad)',

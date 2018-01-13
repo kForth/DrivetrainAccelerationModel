@@ -20,9 +20,12 @@ class DrivetrainModel(CustomModel):
                  battery_voltage=12.5,
                  resistance_com=0.013,
                  resistance_one=0.002,
-                 max_dist=8,
                  time_step=0.001,
-                 simulation_time=120.0):
+                 simulation_time=120.0,
+                 max_dist=8,
+                 initial_position=0,
+                 initial_velocity=0,
+                 initial_acceleration=0):
 
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
@@ -43,4 +46,7 @@ class DrivetrainModel(CustomModel):
                          incline_angle=incline_angle,
                          motor_current_limit=motor_current_limit,
                          motor_peak_current_limit=motor_peak_current_limit,
-                         motor_voltage_limit=motor_voltage_limit)
+                         motor_voltage_limit=motor_voltage_limit,
+                         initial_position=initial_position,
+                         initial_velocity=initial_velocity,
+                         initial_acceleration=initial_acceleration)

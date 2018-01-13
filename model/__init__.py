@@ -77,7 +77,10 @@ def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):
         for line in handle_lines:
             line_visibility[line] += 1 if should_be_visible else -1
             line.set_visible(line_visibility[line] > 0)
-        handle.set_color(list(line_colours[legend.legendHandles.index(handle)]) + [1.0 if should_be_visible else 0.2])
+        if legend.legendHandles.index(handle) < len(models):
+            handle.set_color(list(line_colours[legend.legendHandles.index(handle)]) + [1.0 if should_be_visible else 0.2])
+        else:
+            handle.set_color([0, 0, 0, 1.0 if should_be_visible else 0.2])
         handle_visibility[handle] = should_be_visible
         fig.canvas.draw()
 

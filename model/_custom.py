@@ -81,15 +81,21 @@ class CustomModel:
         self.time_step = time_step
         self.simulation_time = simulation_time
         self.max_dist = max_dist
+        self.initial_position = initial_position
+        self.initial_velocity = initial_velocity
+        self.initial_acceleration = initial_acceleration
 
         # Calculate derived constants
         self.effective_radius = effective_diameter / 2
         self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
+        self.init_sim_vars()
+
+    def init_sim_vars(self):
         self._time = 0  # elapsed time, seconds
-        self._position = initial_position  # distance traveled, meters
-        self._velocity = initial_velocity  # speed, meters/sec
-        self._acceleration = initial_acceleration  # acceleration, meters/sec/sec
+        self._position = self.initial_position  # distance traveled, meters
+        self._velocity = self.initial_velocity  # speed, meters/sec
+        self._acceleration = self.initial_acceleration  # acceleration, meters/sec/sec
         self._voltage = self.battery_voltage  # Voltage at the motor
         self._current_per_motor = 0  # current per motor, amps
         self._energy_per_motor = 0  # power used, mAh
@@ -100,17 +106,6 @@ class CustomModel:
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
         self._was_current_limited = False
-
-        self.data_points = []
-
-    def reset(self):
-        self._time = 0  # elapsed time, seconds
-        self._position = 0  # distance traveled, meters
-        self._velocity = 0  # speed, meters/sec
-        self._acceleration = 0  # acceleration, meters/sec/sec
-        self._voltage = self.battery_voltage  # Voltage at the motor
-        self._current_per_motor = 0  # current per motor, amps
-        self._slipping = False  # state variable, init to false
 
         self.data_points = []
 

@@ -41,7 +41,7 @@ class Optimizer:
         for ratio in self.ratios:
             distance_step_deltas = [self.max_dist for _ in self.distance_steps]
             self.model.gear_ratio = ratio
-            self.model.reset()
+            self.model.init_sim_vars()
             self.model.calc()
 
             time_to_dist_row = [int(0)] * len(self.distance_steps)
