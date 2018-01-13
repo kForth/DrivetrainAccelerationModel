@@ -148,9 +148,8 @@ class CustomModel:
             if self._slipping:
                 available_force_at_axle = (self.effective_weight * self.coeff_kinetic_friction)
 
-        self._voltage = self.battery_voltage - \
-                        (self.num_motors * self._current_per_motor * self.resistance_com) - \
-                        (self._current_per_motor * self.resistance_one)  # compute battery drain
+        self._voltage = self.battery_voltage - (self._current_per_motor * self.resistance_one) - \
+                        (self.num_motors * self._current_per_motor * self.resistance_com)
 
         self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
