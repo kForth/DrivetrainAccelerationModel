@@ -112,7 +112,11 @@ class CustomModel:
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
 
+    def control_update(self):
+        pass
+
     def _calc_max_accel(self, velocity, desired_voltage):
+        self.control_update()
         motor_speed = velocity / self.effective_radius * self.gear_ratio
 
         available_voltage = self._voltage

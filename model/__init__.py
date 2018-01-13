@@ -8,6 +8,7 @@ from matplotlib import lines, patches
 from model._arm import ArmModel
 from model._custom import CustomModel
 from model._drivetrain import DrivetrainModel
+from model._shifting_drivetrain import ShiftingDrivetrainModel
 from model._elevator import ElevatorModel
 
 
