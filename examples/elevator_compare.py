@@ -1,5 +1,4 @@
-from control import PidfController
-from control.fixed_voltage import FixedVoltageController
+from controllers import PidfController
 from model import ElevatorModel, plot_models
 from model.motors import _775pro
 

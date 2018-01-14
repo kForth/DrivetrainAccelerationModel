@@ -1,4 +1,4 @@
-from control.control_loop import ControlLoop
+from controllers.control_loop import ControlLoop
 
 
 class BangBangController(ControlLoop):
