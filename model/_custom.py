@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from math import radians, sin
 
+from controllers.fixed_voltage import FixedVoltageController
+
 
 class CustomModel:
     BROWNOUT_VOLTAGE = 7
@@ -18,7 +20,10 @@ class CustomModel:
         'total_energy':  'Total Energy (nAh)',
         'slipping':      'Slipping',
         'brownout':      'Brownout',
-        'gravity':       'Force of Gravity (N)'
+        'gravity':       'Force of Gravity (N)',
+        'error':         'Error (m)',
+        'goal':          'Goal (m)',
+        'done':          'Done'
     }
 
     PLOT_FACTORS = {
@@ -35,6 +40,9 @@ class CustomModel:
         'slipping':      1,
         'brownout':      1,
         'gravity':       1,
+        'error':         1,
+        'goal':          1,
+        'done':          1
     }
 
     def __init__(self,
@@ -62,7 +70,8 @@ class CustomModel:
                  initial_velocity=0,  # Initial velocity to start simulation from, m/s
                  initial_acceleration=0,  # Initial acceleration to start simulation from, m/s/s
                  controller=None,
-                 auto_calc=True):
+                 auto_calc=True,
+                 name=None):
 
         self.motors = motors
         self.num_motors = self.motors.num_motors
@@ -88,7 +97,11 @@ class CustomModel:
         self.initial_position = initial_position
         self.initial_velocity = initial_velocity
         self.initial_acceleration = initial_acceleration
+        self.name = name
         self.controller = controller
+        if self.controller is None:
+            self.controller = FixedVoltageController()
+            self.controller.set_gains(self.motor_voltage_limit if motor_voltage_limit is not None else self.battery_voltage)
 
         # Calculate derived constants
         self.effective_radius = effective_diameter / 2
@@ -109,7 +122,7 @@ class CustomModel:
         self._cumulative_energy = 0  # total power used mAh
         self._slipping = False
         self._brownout = False
-        self.voltage_setpoint = 0
+        self._voltage_setpoint = 0
 
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
@@ -120,14 +133,12 @@ class CustomModel:
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
 
-    def control_update(self):
-        if self.controller is not None:
-            self.voltage_setpoint = self.controller.update(self._position, self._velocity, self._acceleration,
-                                                           self._voltage, self._current_per_motor)
-            if self.motor_voltage_limit is not None:
-                self.voltage_setpoint = min(self.motor_voltage_limit, max(-self.motor_voltage_limit, self.voltage_setpoint))
-        else:
-            self.voltage_setpoint = self.motor_voltage_limit
+    def update(self):
+        self._voltage_setpoint = self.controller.update(self._position, self._velocity, self._acceleration,
+                                                     self._voltage, self._current_per_motor)
+        if self.motor_voltage_limit is not None:
+            self._voltage_setpoint = min(self.motor_voltage_limit,
+                                         max(-self.motor_voltage_limit, self._voltage_setpoint))
 
     def _calc_max_accel(self, velocity):
         motor_speed = velocity / self.effective_radius * self.gear_ratio
@@ -135,10 +146,9 @@ class CustomModel:
         available_voltage = self._voltage
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
-        applied_voltage = min(self.voltage_setpoint, available_voltage)
+        applied_voltage = min(self._voltage_setpoint, available_voltage)
 
-        self._current_per_motor = max((applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r,
-                                      self.motors.free_current)
+        self._current_per_motor = (applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
 
         if velocity > 0 and self.motor_current_limit is not None:
             if (sum(self._current_history) / len(self._current_history)) \
@@ -168,7 +178,7 @@ class CustomModel:
         self._brownout = self._voltage < self.BROWNOUT_VOLTAGE
 
         tuned_resistance = self.k_resistance_s + self.k_resistance_v * velocity  # rolling resistance, N
-        net_accel_force = available_force_at_axle - max(0, tuned_resistance) - self._get_gravity_force()  # Net force, N
+        net_accel_force = available_force_at_axle - tuned_resistance - self._get_gravity_force()  # Net force, N
 
         if net_accel_force < 0 and self._position <= 0:
             net_accel_force = 0
@@ -178,8 +188,7 @@ class CustomModel:
         self._time = self.time_step
         while self._time < self.simulation_time + self.time_step and \
                 (self._position < self.max_dist or not self.max_dist):
-            self.control_update()
-            # self.voltage_setpoint = self.motor_voltage_limit if self.motor_voltage_limit else 12
+            self.update()
             v_temp = self._velocity + self._acceleration * self.time_step  # kickstart with Euler step
             a_temp = self._calc_max_accel(v_temp)
             v_temp = self._velocity + (self._acceleration + a_temp) / 2 * \
@@ -203,7 +212,7 @@ class CustomModel:
             'pos':           self._position,
             'vel':           self._velocity,
             'accel':         self._acceleration,
-            'voltage':       self.voltage_setpoint,
+            'voltage':       self._voltage_setpoint,
             'current':       self._current_per_motor,
             'total_current': self._current_per_motor * self.num_motors,
             'sys_voltage':   self._voltage,
@@ -213,6 +222,8 @@ class CustomModel:
             'brownout':      1 if self._brownout else 0,
             'gravity':       self._get_gravity_force()
         }))
+        if self.controller is not None:
+            self.data_points[-1].update(self.controller.get_data_point())
 
     def get_data_points(self):
         return self.data_points
@@ -221,7 +232,7 @@ class CustomModel:
         return self.data_points[-1][key]
 
     def calc(self):
-        self.control_update()
+        self.update()
         self._acceleration = self._calc_max_accel(self._velocity)  # compute accel at t=0
         self._add_data_point()  # output values at t=0
 
@@ -232,8 +243,8 @@ class CustomModel:
         return self.__class__.__name__[:-5]
 
     def get_info(self):
-        return "{0}x{1} @ {2}:1 - {3}m".format(self.motors.__class__.__name__, self.num_motors,
-                                               round(self.gear_ratio, 3), round(self.effective_diameter, 2))
+        return ("{0}x{1}".format(self.motors.__class__.__name__, self.num_motors) if self.name is None else self.name) + \
+               " @ {0}:1 - {1}m".format(round(self.gear_ratio, 3), round(self.effective_diameter, 2))
 
     def to_str(self):
         return "." + self.get_info() + \

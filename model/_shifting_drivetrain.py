@@ -30,8 +30,14 @@ class ShiftingDrivetrainModel(CustomModel):
                  initial_velocity=0,
                  initial_acceleration=0,
                  controller=None,
-                 auto_calc=True):
+                 auto_calc=True,
+                 name=None):
 
+        self.high_gear_current_limit = high_gear_current_limit
+        self.low_gear_current_limit = low_gear_current_limit
+        self.shift_velocity = shift_velocity
+        self.high_gear_ratio = high_gear_ratio
+        self.low_gear_ratio = low_gear_ratio
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
                          k_resistance_v=k_resistance_v,
@@ -56,17 +62,13 @@ class ShiftingDrivetrainModel(CustomModel):
                          initial_velocity=initial_velocity,
                          initial_acceleration=initial_acceleration,
                          controller=controller,
-                         auto_calc=auto_calc)
-        self.high_gear_current_limit = high_gear_current_limit
-        self.low_gear_current_limit = low_gear_current_limit
-        self.shift_velocity = shift_velocity
-        self.high_gear_ratio = high_gear_ratio
-        self.low_gear_ratio = low_gear_ratio
+                         auto_calc=auto_calc,
+                         name=name)
 
     def get_info(self):
-        return "{0}x{1} @ ({2}/{3}):1 - {4}m".format(self.motors.__class__.__name__, self.num_motors,
-                                                     round(self.low_gear_ratio, 3), round(self.high_gear_ratio, 3),
-                                                     round(self.effective_diameter, 2))
+        return ("{0}x{1}".format(self.motors.__class__.__name__, self.num_motors) if self.name is None else self.name) + \
+               " @ ({0}/{1}):1 - {2}m".format(round(self.low_gear_ratio, 3), round(self.high_gear_ratio, 3),
+                                              round(self.effective_diameter, 2))
 
     def to_str(self):
         return "." + self.get_info() + \
@@ -74,7 +76,7 @@ class ShiftingDrivetrainModel(CustomModel):
                 if self.low_gear_current_limit or self.high_gear_current_limit else "") + \
                (" <{}V".format(self.motor_voltage_limit) if self.motor_voltage_limit else "")
 
-    def control_update(self):
+    def update(self):
         if self._velocity > self.shift_velocity:
             if self.gear_ratio is not self.high_gear_ratio:
                 self._was_current_limited = False
@@ -83,4 +85,4 @@ class ShiftingDrivetrainModel(CustomModel):
         else:
             self.motor_current_limit = self.low_gear_current_limit
             self.gear_ratio = self.low_gear_ratio
-        super().control_update()
+        super().update()

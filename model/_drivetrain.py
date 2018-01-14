@@ -27,7 +27,8 @@ class DrivetrainModel(CustomModel):
                  initial_velocity=0,
                  initial_acceleration=0,
                  controller=None,
-                 auto_calc=True):
+                 auto_calc=True,
+                 name=None):
 
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
@@ -53,4 +54,5 @@ class DrivetrainModel(CustomModel):
                          initial_velocity=initial_velocity,
                          initial_acceleration=initial_acceleration,
                          controller=controller,
-                         auto_calc=auto_calc)
+                         auto_calc=auto_calc,
+                        name=name)
