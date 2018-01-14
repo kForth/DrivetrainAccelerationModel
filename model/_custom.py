@@ -116,7 +116,6 @@ class CustomModel:
         pass
 
     def _calc_max_accel(self, velocity, desired_voltage):
-        self.control_update()
         motor_speed = velocity / self.effective_radius * self.gear_ratio
 
         available_voltage = self._voltage
@@ -124,7 +123,8 @@ class CustomModel:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
         applied_voltage = min(desired_voltage, available_voltage)
 
-        self._current_per_motor = (applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
+        self._current_per_motor = max((applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r,
+                                      self.motors.free_current)
 
         if velocity > 0 and self.motor_current_limit is not None:
             if (sum(self._current_history) / len(self._current_history)) \
@@ -164,13 +164,15 @@ class CustomModel:
         self._time = self.time_step
         while self._time < self.simulation_time + self.time_step and \
                 (self._position < self.max_dist or not self.max_dist):
+            self.control_update()
+            target_voltage = self.motor_voltage_limit if self.motor_voltage_limit else 12
             v_temp = self._velocity + self._acceleration * self.time_step  # kickstart with Euler step
-            a_temp = self._calc_max_accel(v_temp, self._voltage)
+            a_temp = self._calc_max_accel(v_temp, target_voltage)
             v_temp = self._velocity + (self._acceleration + a_temp) / 2 * \
                                       self.time_step  # recalc v_temp trapezoidally
             self._position += (self._velocity + v_temp) / 2 * self.time_step  # update x trapezoidally
             self._velocity = v_temp  # update V
-            self._acceleration = self._calc_max_accel(v_temp, self._voltage)  # update a
+            self._acceleration = self._calc_max_accel(v_temp, target_voltage)  # update a
 
             self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60  # calc power usage in mAh
             self._cumulative_energy += self._energy_per_motor * self.num_motors
