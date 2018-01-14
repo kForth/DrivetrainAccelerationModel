@@ -17,7 +17,7 @@ class CustomModel:
         'total_current': 'Total Current/100 (A)',
         'sys_voltage':   'System Voltage (V)',
         'energy':        'Energy (nAh)',
-        'total_energy':  'Total Energy (nAh)',
+        'total_energy':  'Total Energy/100 (mAh)',
         'slipping':      'Slipping',
         'brownout':      'Brownout',
         'gravity':       'Force of Gravity (N)',
