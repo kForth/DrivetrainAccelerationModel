@@ -31,6 +31,4 @@ if __name__ == "__main__":
     # models += [DrivetrainModel(CIM(6), gear_ratio=9, robot_mass=68, wheel_diameter=6 * 0.0254,
     #                            motor_voltage_limit=12, motor_current_limit=50, max_dist=6)]
 
-    [model.calc() for model in models]
-
     plot_models(*models, elements_to_plot=('pos', 'vel', 'total_energy'))

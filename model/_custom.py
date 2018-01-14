@@ -10,9 +10,10 @@ class CustomModel:
         'pos':           'Position (m)',
         'vel':           'Velocity (m/s)',
         'accel':         'Acceleration (m/s/s)',
+        'voltage':       'Voltage (V)',
         'current':       'Current/10 (A)',
         'total_current': 'Total Current/100 (A)',
-        'voltage':       'Voltage (V)',
+        'sys_voltage':   'System Voltage (V)',
         'energy':        'Energy (nAh)',
         'total_energy':  'Total Energy (nAh)',
         'slipping':      'Slipping',
@@ -25,9 +26,10 @@ class CustomModel:
         'pos':           1,
         'vel':           1,
         'accel':         1,
+        'voltage':       1,
         'current':       10,
         'total_current': 100,
-        'voltage':       1,
+        'sys_voltage':   1,
         'energy':        100,
         'total_energy':  100,
         'slipping':      1,
@@ -54,11 +56,13 @@ class CustomModel:
                  resistance_com,  # Resistance from bat to PDB (incl main breaker, Ω
                  resistance_one,  # Resistance from PDB to motor (incl PDB breaker), Ω
                  time_step=0.01,  # Integration step size, s
-                 simulation_time=60,  # Integration duration, s
+                 simulation_time=20,  # Integration duration, s
                  max_dist=5,  # Max distance to integrate to, m
                  initial_position=0,  # Initial position to start simulation from, m
                  initial_velocity=0,  # Initial velocity to start simulation from, m/s
-                 initial_acceleration=0):  # Initial acceleration to start simulation from, m/s/s
+                 initial_acceleration=0,  # Initial acceleration to start simulation from, m/s/s
+                 controller=None,
+                 auto_calc=True):
 
         self.motors = motors
         self.num_motors = self.motors.num_motors
@@ -84,12 +88,15 @@ class CustomModel:
         self.initial_position = initial_position
         self.initial_velocity = initial_velocity
         self.initial_acceleration = initial_acceleration
+        self.controller = controller
 
         # Calculate derived constants
         self.effective_radius = effective_diameter / 2
         self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
 
         self.init_sim_vars()
+        if auto_calc:
+            self.calc()
 
     def init_sim_vars(self):
         self._time = 0  # elapsed time, seconds
@@ -102,6 +109,7 @@ class CustomModel:
         self._cumulative_energy = 0  # total power used mAh
         self._slipping = False
         self._brownout = False
+        self.voltage_setpoint = 0
 
         self._current_history_size = 20
         self._current_history = [0 for _ in range(self._current_history_size)]
@@ -113,15 +121,21 @@ class CustomModel:
         return self.effective_weight * sin(radians(self.incline_angle))
 
     def control_update(self):
-        pass
+        if self.controller is not None:
+            self.voltage_setpoint = self.controller.update(self._position, self._velocity, self._acceleration,
+                                                           self._voltage, self._current_per_motor)
+            if self.motor_voltage_limit is not None:
+                self.voltage_setpoint = min(self.motor_voltage_limit, max(-self.motor_voltage_limit, self.voltage_setpoint))
+        else:
+            self.voltage_setpoint = self.motor_voltage_limit
 
-    def _calc_max_accel(self, velocity, desired_voltage):
+    def _calc_max_accel(self, velocity):
         motor_speed = velocity / self.effective_radius * self.gear_ratio
 
         available_voltage = self._voltage
         if self.motor_voltage_limit:
             available_voltage = min(self._voltage, self.motor_voltage_limit)
-        applied_voltage = min(desired_voltage, available_voltage)
+        applied_voltage = min(self.voltage_setpoint, available_voltage)
 
         self._current_per_motor = max((applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r,
                                       self.motors.free_current)
@@ -165,14 +179,14 @@ class CustomModel:
         while self._time < self.simulation_time + self.time_step and \
                 (self._position < self.max_dist or not self.max_dist):
             self.control_update()
-            target_voltage = self.motor_voltage_limit if self.motor_voltage_limit else 12
+            # self.voltage_setpoint = self.motor_voltage_limit if self.motor_voltage_limit else 12
             v_temp = self._velocity + self._acceleration * self.time_step  # kickstart with Euler step
-            a_temp = self._calc_max_accel(v_temp, target_voltage)
+            a_temp = self._calc_max_accel(v_temp)
             v_temp = self._velocity + (self._acceleration + a_temp) / 2 * \
                                       self.time_step  # recalc v_temp trapezoidally
             self._position += (self._velocity + v_temp) / 2 * self.time_step  # update x trapezoidally
             self._velocity = v_temp  # update V
-            self._acceleration = self._calc_max_accel(v_temp, target_voltage)  # update a
+            self._acceleration = self._calc_max_accel(v_temp)  # update a
 
             self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60  # calc power usage in mAh
             self._cumulative_energy += self._energy_per_motor * self.num_motors
@@ -189,9 +203,10 @@ class CustomModel:
             'pos':           self._position,
             'vel':           self._velocity,
             'accel':         self._acceleration,
+            'voltage':       self.voltage_setpoint,
             'current':       self._current_per_motor,
             'total_current': self._current_per_motor * self.num_motors,
-            'voltage':       self._voltage,
+            'sys_voltage':   self._voltage,
             'energy':        self._energy_per_motor,
             'total_energy':  self._cumulative_energy,
             'slipping':      1 if self._slipping else 0,
@@ -206,7 +221,8 @@ class CustomModel:
         return self.data_points[-1][key]
 
     def calc(self):
-        self._acceleration = self._calc_max_accel(self._velocity, self._voltage)  # compute accel at t=0
+        self.control_update()
+        self._acceleration = self._calc_max_accel(self._velocity)  # compute accel at t=0
         self._add_data_point()  # output values at t=0
 
         # self._integrate_with_euler()

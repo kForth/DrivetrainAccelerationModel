@@ -25,7 +25,9 @@ class DrivetrainModel(CustomModel):
                  max_dist=8,
                  initial_position=0,
                  initial_velocity=0,
-                 initial_acceleration=0):
+                 initial_acceleration=0,
+                 controller=None,
+                 auto_calc=True):
 
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
@@ -49,4 +51,6 @@ class DrivetrainModel(CustomModel):
                          motor_voltage_limit=motor_voltage_limit,
                          initial_position=initial_position,
                          initial_velocity=initial_velocity,
-                         initial_acceleration=initial_acceleration)
+                         initial_acceleration=initial_acceleration,
+                         controller=controller,
+                         auto_calc=auto_calc)

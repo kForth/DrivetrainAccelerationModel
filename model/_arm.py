@@ -24,7 +24,9 @@ class ArmModel(CustomModel):
                  simulation_time=120.0,
                  initial_position=0,
                  initial_velocity=0,
-                 initial_acceleration=0):
+                 initial_acceleration=0,
+                 controller=None,
+                 auto_calc=True):
 
         super().__init__(motors=motors,
                          k_resistance_s=k_resistance_s,
@@ -48,7 +50,9 @@ class ArmModel(CustomModel):
                          motor_voltage_limit=motor_voltage_limit,
                          initial_position=initial_position,
                          initial_velocity=initial_velocity,
-                         initial_acceleration=initial_acceleration)
+                         initial_acceleration=initial_acceleration,
+                         controller=controller,
+                         auto_calc=auto_calc)
 
         self.HEADERS.update({
             'pos':          'Position (rad)',
@@ -59,10 +63,10 @@ class ArmModel(CustomModel):
     def _get_gravity_force(self):
         return self.effective_weight * cos(self._position)
 
-    def _calc_max_accel(self, velocity, desired_voltage):
+    def _calc_max_accel(self, velocity):
         motor_speed = velocity * self.gear_ratio
 
-        applied_voltage = min(self._voltage, desired_voltage)
+        applied_voltage = min(self._voltage, self.voltage_setpoint)
 
         self._current_per_motor = (applied_voltage - (motor_speed / self.motors.k_v)) / self.motors.k_r
 
