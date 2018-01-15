@@ -3,12 +3,11 @@ from collections import OrderedDict
 
 
 class Optimizer:
-    def __init__(self, model, ratio_generator=None,
+    def __init__(self, model, config='gear_ratio',
                  min_ratio=2, max_ratio=20, ratio_step=0.5,
                  min_distance=0, max_dist=40, distance_step=0.25,
                  min_time=0, max_time=10, time_step=0.001):
         self.model = model
-        self.ratio_generator = ratio_generator
         model.max_dist = max_dist
 
         self.min_distance = min_distance
@@ -19,12 +18,9 @@ class Optimizer:
         self.max_time = max_time
         self.time_step = time_step
 
-        if self.ratio_generator is not None:
-            self.ratios = self.ratio_generator.get_ratio_list()
-        else:
-            self.ratios = [min_ratio]
-            while self.ratios[-1] <= max_ratio:
-                self.ratios += [self.ratios[-1] + ratio_step]
+        self.ratios = [min_ratio]
+        while self.ratios[-1] <= max_ratio:
+            self.ratios += [self.ratios[-1] + ratio_step]
 
         self.distance_steps = [min_distance / distance_step]
         while self.distance_steps[-1] * distance_step < max_dist:
@@ -126,87 +122,3 @@ class Optimizer:
                 worksheet.write(row + 2, col + 2, self.time_to_dist_data[row][col])
 
         workbook.close()
-
-
-class RatioGenerator:
-    GEARS_32_DP = (20, 40, 60, 80, 100)
-    PINIONS_32_DP = (12,)
-    GEARS_20_DP = (14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 50, 62,
-                   64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84)
-    PINIONS_20_DP = (11, 12, 13, 14)
-    SPROCKETS_25 = [16, 18, 22, 32, 34, 36, 38, 40, 42, 44, 48, 54, 58, 60, 64, 66, 72]
-    SPROCKETS_35 = [12, 15, 22, 24, 26, 28, 30, 32, 33, 36, 42, 44, 48, 54, 60]
-    PULLEYS_HTD_5 = (18, 24, 30, 36, 42, 60)
-    PULLEYS_GT2 = (24, 36, 48, 60)
-    PINION_GT2 = (12,)
-
-    def __init__(self, gears, min_stages=1, max_stages=2, input_gears=None, min_ratio=None, max_ratio=None):
-        self.gears = gears
-        self.min_stages = min_stages
-        self.max_stages = max_stages
-        self.min_ratio = min_ratio
-        self.max_ratio = max_ratio
-        if input_gears:
-            self.input_gears = input_gears
-        else:
-            self.input_gears = gears
-
-        self._ratios = {}
-        self._calc()
-
-    def _calc(self):
-        gear_sets = []
-
-        for first_stage_driving in self.input_gears:
-            for first_stage_driven in self.gears:
-                gear_sets.append({
-                    'gears': [(first_stage_driving, first_stage_driven)],
-                    'value': first_stage_driven / first_stage_driving
-                })
-
-                for num_stages in range(1, self.max_stages):
-                    for driven in itertools.combinations_with_replacement(self.gears, num_stages):
-                        for driving in itertools.combinations_with_replacement(self.gears, num_stages):
-                            driving_set = tuple([first_stage_driving] + list(driving))
-                            driven_set = tuple([first_stage_driven] + list(driven))
-                            gear_set = sorted(list(zip(driving_set, driven_set)), key=lambda x: (x[0], x[1]))
-                            if all([e not in driven_set for e in driving_set]) and \
-                                    all([e not in driving_set for e in driven_set]):
-                                ratio = 1
-                                for gear in driving_set:
-                                    ratio *= gear
-                                for gear in driven_set:
-                                    ratio /= gear
-                                gear_sets.append({
-                                    'gears': gear_set,
-                                    'value': ratio
-                                })
-
-        self._ratios = {}
-        for current_set in gear_sets:
-            if current_set['value'] < 1:
-                key = "1:%.3f" % (1 / current_set['value'])
-            else:
-                key = "%.3f:1" % current_set['value']
-
-            if key not in self._ratios.keys():
-                self._ratios[key] = {
-                    'ratio':            key,
-                    'value': current_set['value'],
-                    'gears':            [],
-                }
-
-            gear_set = (current_set['gears'][0], *sorted(current_set['gears'][1:]))
-            if gear_set not in self._ratios[key]['gears']:
-                self._ratios[key]['gears'].append(gear_set)
-                self._ratios[key]['gears'].sort()
-
-    def get_ratios(self):
-        return OrderedDict(sorted(self._ratios.items(), key=lambda x: x[1]['value']))
-
-    def get_ratio_list(self):
-        ratios = [e['value'] for e in self._ratios.values()
-                  if any([self.min_stages <= len(g) >= self.max_stages for g in e['gears']])]
-        max_ratio = self.max_ratio if self.max_ratio is not None else max(ratios)
-        min_ratio = self.min_ratio if self.min_ratio is not None else min(ratios)
-        return sorted([e for e in ratios if max_ratio >= e >= min_ratio])
