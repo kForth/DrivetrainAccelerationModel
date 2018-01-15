@@ -101,7 +101,8 @@ class CustomModel:
         self.controller = controller
         if self.controller is None:
             self.controller = FixedVoltageController()
-            self.controller.set_gains(self.motor_voltage_limit if motor_voltage_limit is not None else self.battery_voltage)
+            self.controller.set_gains(
+                self.motor_voltage_limit if motor_voltage_limit is not None else self.battery_voltage)
 
         # Calculate derived constants
         self.effective_radius = effective_diameter / 2
@@ -135,7 +136,7 @@ class CustomModel:
 
     def update(self):
         self._voltage_setpoint = self.controller.update(self._position, self._velocity, self._acceleration,
-                                                     self._voltage, self._current_per_motor)
+                                                        self._voltage, self._current_per_motor)
         if self.motor_voltage_limit is not None:
             self._voltage_setpoint = min(self.motor_voltage_limit,
                                          max(-self.motor_voltage_limit, self._voltage_setpoint))

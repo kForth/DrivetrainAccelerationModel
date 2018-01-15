@@ -1,7 +1,3 @@
-import itertools
-from collections import OrderedDict
-
-
 class Optimizer:
     def __init__(self, model, config='gear_ratio',
                  min_ratio=2, max_ratio=20, ratio_step=0.5,

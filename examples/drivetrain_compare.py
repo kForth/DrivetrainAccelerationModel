@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     models += [DrivetrainModel(_775pro(8), gear_ratio=28.3 * 30 / 24, robot_mass=68, wheel_diameter=6 * 0.0254,
                                motor_voltage_limit=12, motor_current_limit=30, max_dist=6,
-                               name="6\" Evo Slim")]
+                               name="6\" Evo Slim - w\\ external")]
 
     models += [ShiftingDrivetrainModel(_775pro(8), robot_mass=68, max_dist=6, shift_velocity=2.55,
                                        low_gear_ratio=(85 / 12 * 56 / 14 * 46 / 29),
