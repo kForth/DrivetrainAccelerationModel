@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 class ControlLoop:
 
-
     def __init__(self):
         self._goal = 0
         self._deadband = 0
@@ -33,12 +32,12 @@ class ControlLoop:
         pass
 
     @abstractmethod
-    def calc_voltage(self, position, velocity, acceleration, voltage, current_per_motor):
+    def calc_voltage(self, position):
         return 0
 
-    def update(self, position, velocity, acceleration, voltage, current_per_motor):
+    def update(self, position):
         self._error = self._goal - position
-        voltage = self.calc_voltage(position, velocity, acceleration, voltage, current_per_motor)
+        voltage = self.calc_voltage(position)
         self._last_error = self._error
         self._on_goal = abs(self._last_error) < self._deadband
         return voltage

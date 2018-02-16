@@ -15,7 +15,7 @@ class BangBangController(ControlLoop):
         self.forward_voltage = forward_voltage
         self.reverse_voltage = reverse_voltage
 
-    def calc_voltage(self, position, *args, **kwargs):
+    def calc_voltage(self, position):
         if position < (self._goal - self.toggle_deadband):
             return self.forward_voltage
         elif position > (self._goal + self.toggle_deadband):

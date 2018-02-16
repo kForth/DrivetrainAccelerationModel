@@ -9,5 +9,5 @@ class FixedVoltageController(ControlLoop):
     def set_gains(self, voltage):
         self._voltage = voltage
 
-    def calc_voltage(self, position, velocity, acceleration, voltage, current_per_motor):
+    def calc_voltage(self, position):
         return self._voltage

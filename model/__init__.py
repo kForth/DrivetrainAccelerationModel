@@ -10,6 +10,8 @@ from model._custom import CustomModel
 from model._drivetrain import DrivetrainModel
 from model._shifting_drivetrain import ShiftingDrivetrainModel
 from model._elevator import ElevatorModel
+from model._intake_shooter import IntakeShooterModel
+from model._shooter_spinup import ShooterSpinupModel
 
 
 def plot_models(*models, elements_to_plot=('pos', 'vel', 'accel')):

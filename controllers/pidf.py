@@ -24,7 +24,7 @@ class PidfController(ControlLoop):
         self._min_i_error = min_i_error
         self.reset_i_on_overshoot = reset_i_on_overshoot
 
-    def calc_voltage(self, position, *args, **kwargs):
+    def calc_voltage(self, position):
         if abs(self._error) < self._min_i_error:
             self._error_sum += self._error
 

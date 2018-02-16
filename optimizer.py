@@ -1,5 +1,5 @@
 class Optimizer:
-    def __init__(self, model, config='gear_ratio',
+    def __init__(self, model,
                  min_ratio=2, max_ratio=20, ratio_step=0.5,
                  min_distance=0, max_dist=40, distance_step=0.25,
                  min_time=0, max_time=10, time_step=0.001):

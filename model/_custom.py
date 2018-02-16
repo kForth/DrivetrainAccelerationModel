@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from math import radians, sin
+from math import radians, sin, cos
 
 from controllers.fixed_voltage import FixedVoltageController
 
@@ -17,7 +17,7 @@ class CustomModel:
         'total_current': 'Total Current/100 (A)',
         'sys_voltage':   'System Voltage (V)',
         'energy':        'Energy (nAh)',
-        'total_energy':  'Total Energy/100 (mAh)',
+        'total_energy':  'Total Energy/10 (mAh)',
         'slipping':      'Slipping',
         'brownout':      'Brownout',
         'gravity':       'Force of Gravity (N)',
@@ -36,7 +36,7 @@ class CustomModel:
         'total_current': 100,
         'sys_voltage':   1,
         'energy':        100,
-        'total_energy':  100,
+        'total_energy':  10,
         'slipping':      1,
         'brownout':      1,
         'gravity':       1,
@@ -102,11 +102,23 @@ class CustomModel:
         if self.controller is None:
             self.controller = FixedVoltageController()
             self.controller.set_gains(
-                self.motor_voltage_limit if motor_voltage_limit is not None else self.battery_voltage)
+                    self.motor_voltage_limit if motor_voltage_limit is not None else self.battery_voltage)
 
         # Calculate derived constants
         self.effective_radius = effective_diameter / 2
         self.effective_weight = self.effective_mass * 9.80665  # effective weight, Newtons
+
+        self.traction_limited = ((self.motor_current_limit if self.motor_current_limit is not None
+                                  else self.motors.stall_current) *
+                                 self.motors.k_t * self.gear_ratio * self.k_gearbox_efficiency /
+                                 self.effective_radius) > (self.effective_weight * self.coeff_static_friction)
+        if self.check_for_slip:
+            print(self.name)
+            print('\tTraction Limited: \t{}'.format(self.traction_limited))
+        if self.incline_angle > 0:
+            print(self.incline_angle)
+            print('\tHold Current: \t{}A'.format(
+                    round(self._get_gravity_force() * self.effective_radius / self.gear_ratio / self.motors.k_t), 1))  # N * m / (N*m/A)
 
         self.init_sim_vars()
         if auto_calc:
@@ -134,9 +146,11 @@ class CustomModel:
     def _get_gravity_force(self):
         return self.effective_weight * sin(radians(self.incline_angle))
 
+    def _get_normal_force(self):
+        return self.effective_weight * cos(radians(self.incline_angle))
+
     def update(self):
-        self._voltage_setpoint = self.controller.update(self._position, self._velocity, self._acceleration,
-                                                        self._voltage, self._current_per_motor)
+        self._voltage_setpoint = self.controller.update(self._position)
         if self.motor_voltage_limit is not None:
             self._voltage_setpoint = min(self.motor_voltage_limit,
                                          max(-self.motor_voltage_limit, self._voltage_setpoint))
@@ -165,13 +179,13 @@ class CustomModel:
         available_force_at_axle = available_torque_at_axle / self.effective_radius
 
         if self.check_for_slip:
-            if available_force_at_axle > self.effective_weight * self.coeff_static_friction:
+            if available_force_at_axle > self._get_normal_force() * self.coeff_static_friction:
                 self._slipping = True
-            elif available_force_at_axle < self.effective_weight * self.coeff_kinetic_friction:
+            elif available_force_at_axle < self._get_normal_force() * self.coeff_kinetic_friction:
                 self._slipping = False
 
             if self._slipping:
-                available_force_at_axle = (self.effective_weight * self.coeff_kinetic_friction)
+                available_force_at_axle = (self._get_normal_force() * self.coeff_kinetic_friction)
 
         self._voltage = self.battery_voltage - (self._current_per_motor * self.resistance_one) - \
                         (self.num_motors * self._current_per_motor * self.resistance_com)
@@ -198,7 +212,7 @@ class CustomModel:
             self._velocity = v_temp  # update V
             self._acceleration = self._calc_max_accel(v_temp)  # update a
 
-            self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60  # calc power usage in mAh
+            self._energy_per_motor = self._current_per_motor * self.time_step * 1000 / 60 / 60  # calc power usage in mAh
             self._cumulative_energy += self._energy_per_motor * self.num_motors
             self._current_history.append(self._current_per_motor)
             if len(self._current_history) > self._current_history_size:
@@ -207,8 +221,8 @@ class CustomModel:
             self._add_data_point()
             self._time += self.time_step
 
-    def _add_data_point(self):
-        self.data_points.append(OrderedDict({
+    def _get_data_point(self):
+        point = OrderedDict({
             'time':          self._time,
             'pos':           self._position,
             'vel':           self._velocity,
@@ -222,9 +236,13 @@ class CustomModel:
             'slipping':      1 if self._slipping else 0,
             'brownout':      1 if self._brownout else 0,
             'gravity':       self._get_gravity_force()
-        }))
+        })
         if self.controller is not None:
-            self.data_points[-1].update(self.controller.get_data_point())
+            point.update(self.controller.get_data_point())
+        return point
+
+    def _add_data_point(self):
+        self.data_points.append(self._get_data_point())
 
     def get_data_points(self):
         return self.data_points
@@ -244,7 +262,8 @@ class CustomModel:
         return self.__class__.__name__[:-5]
 
     def get_info(self):
-        return ("{0}x{1}".format(self.motors.__class__.__name__, self.num_motors) if self.name is None else self.name) + \
+        return ("{0}x{1}".format(self.motors.__class__.__name__,
+                                 self.num_motors) if self.name is None else self.name) + \
                " @ {0}:1 - {1}m".format(round(self.gear_ratio, 3), round(self.effective_diameter, 2))
 
     def to_str(self):
